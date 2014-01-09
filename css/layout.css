@@ -6,7 +6,7 @@
 	-webkit-border-radius: 5px;
 	-moz-border-radius: 5px;
 	border-radius: 5px;
-    padding: 0
+	padding: 0 0 10px 0
 }
 
 .box.red {
@@ -39,7 +39,47 @@ h3 {
 	text-shadow: 0 1px 0 #000;
 }
 
-.yellow {
-	background-color: #D3A80D;
+.google-yellow {
+	color: #EEB211;
+}
+
+.google-blue {
+	color: #3369E8;
+}
+
+.google-green {
+	color: #009925;
+}
+
+.google-red {
+	color: #D50F25;
+}
+.block {
+  	text-align: center;
+}
+
+.block:before {
+  	content: '';
+  	display: inline-block;
+  	height: 100%;
+  	vertical-align: middle;
+  	margin-right: -0.25em; /* Adjusts for spacing */
+}
+
+.centered {
+ 	display: inline-block;
+  	vertical-align: middle;
+  	width: auto;
+}
+
+
+#logo {
+    font-family: Catull;
+    src: url(font/catull.ttf);
+    font-size: 72px;
+}
+
+#search-button {
+	font-weight: bold;
 }
 
