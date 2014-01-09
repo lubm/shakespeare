@@ -20,4 +20,5 @@ class HomePage(webapp2.RequestHandler):
 
 application = webapp2.WSGIApplication([
     ('/', HomePage),
+    ('/search', MainPage),
 ], debug=True)
