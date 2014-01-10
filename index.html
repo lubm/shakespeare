@@ -8,36 +8,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
   </head>
   <body>
+    <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+      <div class="navbar-header">
+        <a class="navbar-brand" href="/">
+          <div class="logo" id="small-logo">
+            <span class="google-blue">S</span>
+            <span class="google-red">h</span>
+            <span class="google-yellow">a</span>
+            <span class="google-blue">k</span>
+            <span class="google-green">e</span>
+            <span class="google-yellow">s</span>
+            <span class="google-red">p</span>
+            <span class="google-blue">y</span>
+          </div>
+        </a>
+
+        <form class="navbar-form navbar-left" role="search" id="search-header" action="/search" method="get">
+          <div class="form-group">
+            <input type="text" name="searched_word" class="form-control" value='{{ searched_word }}' id="search-value" placeholder="Enter word">
+            </div>
+          <button type="submit" class="btn btn-default">Search</button>
+        </form>
+
+      </div>
+      <div class="clear"></div>
+    </div>
+
 
   	<div class="container">
-  		<h1>Search Shakespeare's Works</h1>
+  
+      <div class="row">
 
-  		<div class="row">
-
-  			<div class="col-md-6 box red">
-          <h3>Search for term</h3>
-          <form class="form-inline" role="form" action="/search" method="get">
-            <div class="form-group">
-              <input type="text" name="searched_word" class="form-control" value='{{ searched_word  }}' id="search-value" placeholder="Enter word">
-            </div>
-            <button type="submit" class="btn btn-default">Search</button>
-          </form>
+  			<div class="col-md-8 ">
+          <h3>Search Results</h3>
+          <p>Div content.</p>
         </div>
 
-  			<div class="col-md-6 box green">
-          <h3>Definition</h3>
-          <p>Div content.</p>
+  			<div class="col-md-4">
+          <h3>{{ searched_word }}</h3>
+          <p>TODO:Here definition</p>
         </div>  
 
   		</div>
-
-
-  		<div class="row">
-  			<div class="box blue">
-          <h3>Search Results</h3>
-          <p>Div content.</p>
-        </div> 
-      </div>
 
     </div>
   </body>

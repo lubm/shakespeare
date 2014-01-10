@@ -9,6 +9,9 @@
 	padding: 0 0 10px 0
 }
 
+
+
+
 .box.red {
 	border: 2px solid #A21111;
 }
@@ -39,6 +42,10 @@ h3 {
 	text-shadow: 0 1px 0 #000;
 }
 
+
+
+
+
 .google-yellow {
 	color: #EEB211;
 }
@@ -54,6 +61,7 @@ h3 {
 .google-red {
 	color: #D50F25;
 }
+
 .block {
   	text-align: center;
 }
@@ -72,8 +80,17 @@ h3 {
   	width: auto;
 }
 
+.logo {
+	font-family: Catull;
+    src: url(font/catull.ttf);
+}
 
-#logo {
+#small-logo {
+    font-size: 26px;
+}
+
+
+#big-logo {
     font-family: Catull;
     src: url(font/catull.ttf);
     font-size: 72px;
@@ -81,5 +98,22 @@ h3 {
 
 #search-button {
 	font-weight: bold;
+}
+
+.right {
+	float: right;
+}
+
+.left {
+	float: left;
+}
+
+.clear {
+	float: none;
+	clear: both;
+}
+
+.navbar {
+	vertical-align: middle;
 }
 
