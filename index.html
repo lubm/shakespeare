@@ -39,19 +39,20 @@
       <div class="row">
 
   			<div class="col-md-8 ">
-          <h3>Search Results</h3>
-          {% if mentions_list %}
-            <ul>
-              {% for mention in mentions_list %}
-                <li>
-                  <div>Work: {{ mention.work }}</div>
-                  <div>Line: <i>{{ mention.line }}</i></div>
-                </li>
+          <div>
+          {% if work_mentions %}
+              {% for work, lines in work_mentions.items %}
+                <div class="text-danger"><h3>{{ work }}</h3></div>
+                <i>
+                {% for line in lines %}
+                  <p>{{ line|safe }}</p>
+                {% endfor %}
+                </i>
               {% endfor %}
-            </ul>
           {% else %}
             <p>No results found for <i>{{ searched_word }}</i> </p>
           {% endif %}
+          </div>
           
         </div>
 
