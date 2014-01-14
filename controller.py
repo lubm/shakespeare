@@ -1,6 +1,7 @@
 import cgi
 import re
 
+import time
 import webapp2
 from google.appengine.ext.webapp import template
 
@@ -16,12 +17,16 @@ class MainPage(webapp2.RequestHandler):
     	value = searched_value if searched_value else ''
 
         work_mentions = []
+        number_results = 0
         if value:
+            start = time.time()
             word = Word.get_from_index(cgi.escape(value))
+            end = time.time()
             if word:
                 # Grouping mentions by work for UI display
                 work_mentions = {}               
                 for mention in word.mentions:
+                    number_results += 1
                     # Making the words stay bold
                     line = re.sub(value, "<b>%s</b>" % value, mention.line)
                     if mention.work not in work_mentions:
@@ -34,9 +39,12 @@ class MainPage(webapp2.RequestHandler):
         for work in work_mentions:
             print work
 
+
     	template_values = {
             'searched_word': value,
-            'work_mentions': work_mentions
+            'work_mentions': work_mentions,
+            'number_results': number_results,
+            'time': round(end-start, 4)
         }
 
         self.response.headers['Content-Type'] = 'text/html'

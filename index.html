@@ -38,7 +38,11 @@
   
       <div class="row">
 
-  			<div class="col-md-8 ">
+      <div class="stats"> 
+          {{ number_results }} results ({{ time }} seconds)
+      </div>
+
+  	<div class="col-md-8 ">
           <div>
           {% if work_mentions %}
               {% for work, lines in work_mentions.items %}
@@ -54,12 +58,11 @@
           {% endif %}
           </div>
           
-        </div>
-
-  			<div class="col-md-4 box">
-          <h3>{{ searched_word }}</h3>
-          <p>TODO:Here definition</p>
-        </div>  
+      </div>
+      <div class="col-md-4 box">
+        <h3>{{ searched_word }}</h3>
+        <p>TODO:Here definition</p>
+      </div>  
 
   		</div>
 
