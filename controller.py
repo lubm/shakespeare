@@ -1,5 +1,6 @@
 import cgi
 
+import time
 import webapp2
 from google.appengine.ext.webapp import template
 
@@ -13,16 +14,21 @@ class MainPage(webapp2.RequestHandler):
     	searched_value = self.request.get('searched_word')
 
     	value = searched_value if searched_value else ''
-
+        
         mentions = []
         if value:
+            start = time.time()
             word = Word.get_from_index(cgi.escape(value))
+            end = time.time()
             if word:
                 mentions = word.mentions
 
+
     	template_values = {
             'searched_word': value,
-            'mentions_list': mentions
+            'mentions_list': mentions,
+            'number_results': len(mentions),
+            'time': round(end-start, 4)
         }
         print mentions
 

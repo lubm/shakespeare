@@ -37,8 +37,10 @@
   	<div class="container content">
   
       <div class="row">
-
-  			<div class="col-md-8 ">
+      <div class="stats"> 
+          {{ number_results }} results ({{ time }} seconds)
+      </div>
+      <div class="col-md-8 ">
           <h3>Search Results</h3>
           {% if mentions_list %}
             <ul>
@@ -53,12 +55,11 @@
             <p>No results found for <i>{{ searched_word }}</i> </p>
           {% endif %}
           
-        </div>
-
-  			<div class="col-md-4 box">
-          <h3>{{ searched_word }}</h3>
-          <p>TODO:Here definition</p>
-        </div>  
+      </div>
+      <div class="col-md-4 box">
+        <h3>{{ searched_word }}</h3>
+        <p>TODO:Here definition</p>
+      </div>  
 
   		</div>
 
