@@ -1,16 +1,30 @@
+import cgi
+
 import webapp2
 from google.appengine.ext.webapp import template
+
+from models.mention import Mention
+from models.word import Word
+from tasks.parser import Parser
 
 class MainPage(webapp2.RequestHandler):
 
     def get(self):
     	searched_value = self.request.get('searched_word')
 
-    	value = searched_value if searched_value is not None else ''
+    	value = searched_value if searched_value else ''
+
+        mentions = []
+        if value:
+            word = Word.get_from_index(cgi.escape(value))
+            if word:
+                mentions = word.mentions
 
     	template_values = {
             'searched_word': value,
+            'mentions_list': mentions
         }
+        print mentions
 
         self.response.headers['Content-Type'] = 'text/html'
         self.response.out.write(template.render('index.html', template_values))
@@ -23,7 +37,16 @@ class HomePage(webapp2.RequestHandler):
 		self.response.out.write(template.render('homepage.html', {}))
 
 
+class CreateDatabase(webapp2.RequestHandler):
+
+    def get(self):
+        parser = Parser('test_data')
+        parser.parse()
+
+        self.redirect('/')
+    
 application = webapp2.WSGIApplication([
     ('/', HomePage),
     ('/search', MainPage),
+    ('/create_database', CreateDatabase)
 ], debug=True)

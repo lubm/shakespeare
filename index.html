@@ -40,7 +40,19 @@
 
   			<div class="col-md-8 ">
           <h3>Search Results</h3>
-          <p>Div content.</p>
+          {% if mentions_list %}
+            <ul>
+              {% for mention in mentions_list %}
+                <li>
+                  <div>Work: {{ mention.work }}</div>
+                  <div>Line: <i>{{ mention.line }}</i></div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>No results found for <i>{{ searched_word }}</i> </p>
+          {% endif %}
+          
         </div>
 
   			<div class="col-md-4 box">
