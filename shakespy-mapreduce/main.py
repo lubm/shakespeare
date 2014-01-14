@@ -71,41 +71,8 @@ class FileMetadata(db.Model):
     uploadedOn = db.DateTimeProperty()
     source = db.StringProperty()
     blobkey = db.StringProperty()
-    wordcount_link = db.StringProperty()
     index_link = db.StringProperty()
-    phrases_link = db.StringProperty()
 
-    @staticmethod
-    def getFirstKeyForUser(username):
-        """Helper function that returns the first possible key a user could own.
-
-        This is useful for table scanning, in conjunction with getLastKeyForUser.
-
-        Args:
-            username: The given user's e-mail address.
-        Returns:
-            The internal key representing the earliest possible key that a user could
-            own (although the value of this key is not able to be used for actual
-            user data).
-        """
-
-        return db.Key.from_path("FileMetadata", username + FileMetadata.__SEP)
-
-    @staticmethod
-    def getLastKeyForUser(username):
-        """Helper function that returns the last possible key a user could own.
-
-        This is useful for table scanning, in conjunction with getFirstKeyForUser.
-
-        Args:
-            username: The given user's e-mail address.
-        Returns:
-            The internal key representing the last possible key that a user could
-            own (although the value of this key is not able to be used for actual
-            user data).
-        """
-
-        return db.Key.from_path("FileMetadata", username + FileMetadata.__NEXT)
 
     @staticmethod
     def getKeyName(username, date, blob_key):
@@ -140,13 +107,7 @@ class IndexHandler(webapp2.RequestHandler):
         user = users.get_current_user()
         username = user.nickname()
 
-        first = FileMetadata.getFirstKeyForUser(username)
-        last = FileMetadata.getLastKeyForUser(username)
-
-        q = FileMetadata.all()
-        q.filter("__key__ >", first)
-        q.filter("__key__ < ", last)
-        results = q.fetch(10)
+        results = FileMetadata.all()
 
         items = [result for result in results]
         length = len(items)
@@ -172,13 +133,6 @@ class IndexHandler(webapp2.RequestHandler):
 
         pipeline.start()
         self.redirect(pipeline.base_path + "/status?root=" + pipeline.pipeline_id)
-
-
-def split_into_sentences(s):
-    """Split text into list of sentences."""
-    s = re.sub(r"\s+", " ", s)
-    s = re.sub(r"[\\.\\?\\!]", "\n", s)
-    return s.split("\n")
 
 
 def split_into_words(s):
@@ -239,18 +193,11 @@ class StoreOutput(base_handler.PipelineBase):
         output: the blobstore location where the output of the job is stored
     """
 
-    def run(self, mr_type, encoded_key, output):
+    def run(self, encoded_key, output):
         logging.debug("output is %s" % str(output))
         key = db.Key(encoded=encoded_key)
         m = FileMetadata.get(key)
-
-        if mr_type == "WordCount":
-            m.wordcount_link = output[0]
-        elif mr_type == "Index":
-            m.index_link = output[0]
-        elif mr_type == "Phrases":
-            m.phrases_link = output[0]
-
+        m.index_link = output[0]
         m.put()
 
 class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
