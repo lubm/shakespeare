@@ -17,9 +17,7 @@
           <td>name</td>
           <td>uploaded on</td>
           <td>source</td>
-          <td>wordcount link</td>
           <td>index link</td>
-          <td>phrases link</td>
         </tr>
         {% for item in items %}
         <tr>
@@ -29,18 +27,8 @@
           <td>{{ item.uploadedOn }}</td>
           <td>{{ item.source }}</td>
           <td>
-            {% if item.wordcount_link %}
-            <a href="{{ item.wordcount_link }}">wordcount</a>
-            {% endif %}
-          </td>
-          <td>
             {% if item.index_link %}
             <a href="{{ item.index_link }}">index</a>
-            {% endif %}
-          </td>
-          <td>
-            {% if item.phrases_link %}
-            <a href="{{ item.phrases_link }}">phrases</a>
             {% endif %}
           </td>
         </tr>
@@ -76,17 +64,10 @@
         <br />
         <table>
           <tr>
-            <td><input type="submit" id="word_count" name="word_count" value="Word Count" disabled="true"></td>
             <td><input type="submit" id="index" name="index" value="Index" disabled="true"></td>
-            <td><input type="submit" id="phrases" name="phrases" value="Phrases" disabled="true"></td>
           </tr>
         </table>
       </form>
-      <h2>Step 3: Sit back and enjoy!</h2>
-      <p>Once your MapReduce job finishes, come back to this page and you'll see a link next to the input file you selected, depending on which job you ran.</p>
-      <h3>About MapReduce Made Easy</h3>
-      <p>MapReduce Made Easy is a more accessible version of the original mapreduce test application found in the App Engine MapReduce source code, designed by Mike Aizatsky. Retouching work done by Chris Bunch - learn more about <a href="http://mapreduce.appspot.com">App Engine MapReduce</a> and make your own apps!</p>
     </div>
-    <div style="text-align:center"><img src="https://developers.google.com/appengine/images/appengine-silver-120x30.gif" alt="Powered by Google App Engine" /></div>
   </body>
 </html>
