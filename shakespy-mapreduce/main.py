@@ -30,7 +30,6 @@ Bunch)"""
 import datetime
 import jinja2
 import re
-import urllib
 import webapp2
 
 from google.appengine.ext import blobstore
@@ -38,14 +37,10 @@ from google.appengine.ext import db
 
 from google.appengine.ext.webapp import blobstore_handlers
 
-from google.appengine.api import files
-from google.appengine.api import taskqueue
 from google.appengine.api import users
 
 from mapreduce import base_handler
 from mapreduce import mapreduce_pipeline
-from mapreduce import operation as op
-from mapreduce import shuffler
 
 
 class FileMetadata(db.Model):
@@ -224,19 +219,10 @@ class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
         self.redirect("/")
 
 
-class DownloadHandler(blobstore_handlers.BlobstoreDownloadHandler):
-    """Handler to download blob by blobkey."""
-
-    def get(self, key):
-        key = str(urllib.unquote(key)).strip()
-        blob_info = blobstore.BlobInfo.get(key)
-        self.send_blob(blob_info)
-
 
 app = webapp2.WSGIApplication(
         [
                 ('/', IndexHandler),
                 ('/upload', UploadHandler),
-                (r'/blobstore/(.*)', DownloadHandler),
         ],
         debug=True)
