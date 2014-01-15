@@ -46,10 +46,10 @@
           <div>
           {% if work_mentions %}
               {% for work, lines in work_mentions.items %}
-                <div class="text-danger"><h3>{{ work }}</h3></div>
+                <div class="title text-danger">{{ work }}</div>
                 <i>
                 {% for line in lines %}
-                  <p>{{ line|safe }}</p>
+                  <p class="line">{{ line|safe }}</p>
                 {% endfor %}
                 </i>
               {% endfor %}
