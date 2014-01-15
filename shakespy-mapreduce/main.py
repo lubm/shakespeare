@@ -123,12 +123,7 @@ class IndexHandler(webapp2.RequestHandler):
         filekey = self.request.get("filekey")
         blob_key = self.request.get("blobkey")
 
-        if self.request.get("word_count"):
-            pipeline = WordCountPipeline(filekey, blob_key)
-        elif self.request.get("index"):
-            pipeline = IndexPipeline(filekey, blob_key)
-        else:
-            pipeline = PhrasesPipeline(filekey, blob_key)
+        pipeline = IndexPipeline(filekey, blob_key)
 
         pipeline.start()
         self.redirect(pipeline.base_path + "/status?root=" + pipeline.pipeline_id)
@@ -172,10 +167,16 @@ class IndexPipeline(base_handler.PipelineBase):
                 "mapreduce.input_readers.BlobstoreZipInputReader",
                 "mapreduce.output_writers.BlobstoreOutputWriter",
                 mapper_params={
+                    "input_reader": {
                         "blob_key": blobkey,
+                    },
                 },
                 reducer_params={
+                    "output_writer": {
                         "mime_type": "text/plain",
+                        "output_sharding": "input",
+                        "filesystem": "blobstore",
+                    },
                 },
                 shards=16)
         yield StoreOutput("Index", filekey, output)

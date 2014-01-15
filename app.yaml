@@ -7,11 +7,11 @@ threadsafe: true # TODO: check if mapreduce is threadsafe
 handlers:
 - url: /css
   static_dir: css
-  
-- url: /mapreduce(/.*)?
-  script: mapreduce.main.APP
 
 - url: /.*
   script: controller.application
+
+includes:
+- mapreduce/include.yaml
 
 
