@@ -4,10 +4,12 @@ import re
 import time
 import webapp2
 from google.appengine.ext.webapp import template
+from google.appengine.api import urlfetch
 
 from models.mention import Mention
 from models.word import Word
 from tasks.parser import Parser
+
 
 class MainPage(webapp2.RequestHandler):
 
@@ -49,6 +51,12 @@ class MainPage(webapp2.RequestHandler):
 
         self.response.headers['Content-Type'] = 'text/html'
         self.response.out.write(template.render('index.html', template_values))
+
+ class DefinePage(webapp2.RequestHandler):
+
+ 	def get(self):
+ 		rpc = urlfetch.create_rpc()
+		urlfetch.make_fetch_call(rpc, "http://definition-server.appspot.com/definition.define")
 
 
 class HomePage(webapp2.RequestHandler):

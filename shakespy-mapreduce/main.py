@@ -29,7 +29,6 @@ Bunch)"""
 
 import datetime
 import jinja2
-import logging
 import re
 import urllib
 import webapp2
@@ -147,9 +146,7 @@ def index_map(data):
     (entry, text_fn) = data
     text = text_fn()
 
-    logging.debug("Got %s", entry.filename)
     for l in text.split("\n"):
-        #logging.info("Got %s as text line", l)
         for w in split_into_words(l.lower()):
             yield (w, l)
 
@@ -193,8 +190,7 @@ class StoreOutput(base_handler.PipelineBase):
         output: the blobstore location where the output of the job is stored
     """
 
-    def run(self, encoded_key, output):
-        logging.debug("output is %s" % str(output))
+    def run(self, encoded_key, type, output):
         key = db.Key(encoded=encoded_key)
         m = FileMetadata.get(key)
         m.index_link = output[0]
@@ -206,7 +202,6 @@ class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
     def post(self):
         source = "uploaded by user"
         upload_files = self.get_uploads("file")
-        logging.info("upload_files[0] = %s", upload_files[0])
         blob_key = upload_files[0].key()
         name = self.request.get("name")
 
@@ -233,7 +228,6 @@ class DownloadHandler(blobstore_handlers.BlobstoreDownloadHandler):
 
     def get(self, key):
         key = str(urllib.unquote(key)).strip()
-        logging.debug("key is %s" % key)
         blob_info = blobstore.BlobInfo.get(key)
         self.send_blob(blob_info)
 
