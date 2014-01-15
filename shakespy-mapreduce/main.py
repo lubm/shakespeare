@@ -191,7 +191,7 @@ class StoreOutput(base_handler.PipelineBase):
         output: the blobstore location where the output of the job is stored
     """
 
-    def run(self, encoded_key, type, output):
+    def run(self, mr_type, encoded_key, output):
         key = db.Key(encoded=encoded_key)
         m = FileMetadata.get(key)
         m.index_link = output[0]
