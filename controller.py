@@ -22,7 +22,7 @@ class MainPage(webapp2.RequestHandler):
         number_results = 0
         if value:
             start = time.time()
-            word = Word.get_from_index(cgi.escape(value))
+            word = Word.get_from_shakespeare_index(cgi.escape(value))
             end = time.time()
             if word:
                 # Grouping mentions by work for UI display

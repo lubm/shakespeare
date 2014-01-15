@@ -50,8 +50,23 @@
 }
 
 .logo {
-	font-family: Catull;
+    font-family: Catull;
     src: url(font/catull.ttf);
+}
+
+.title {
+    font-family: Catull;
+    src: url(font/catull.ttf);
+    font-size: 24px;
+    padding-bottom: 5px;
+    padding-top: 5px;
+}
+
+.line {
+    font-family: Catull;
+    src: url(font/catull.ttf);
+    font-size: 18px;
+    padding: 3px;
 }
 
 #small-logo {
