@@ -14,9 +14,9 @@ from tasks.parser import Parser
 class MainPage(webapp2.RequestHandler):
 
     def get(self):
-    	searched_value = self.request.get('searched_word')
+        searched_value = self.request.get('searched_word')
 
-    	value = searched_value if searched_value else ''
+        value = searched_value if searched_value else ''
 
         work_mentions = []
         number_results = 0
@@ -42,7 +42,7 @@ class MainPage(webapp2.RequestHandler):
             print work
 
 
-    	template_values = {
+        template_values = {
             'searched_word': value,
             'work_mentions': work_mentions,
             'number_results': number_results,
@@ -55,16 +55,16 @@ class MainPage(webapp2.RequestHandler):
 
 class DefinePage(webapp2.RequestHandler):
 
- 	def get(self):
- 		rpc = urlfetch.create_rpc()
-		urlfetch.make_fetch_call(rpc, "http://definition-server.appspot.com/definition.define")
+    def get(self):
+        rpc = urlfetch.create_rpc()
+        urlfetch.make_fetch_call(rpc, "http://definition-server.appspot.com/definition.define")
 
 
 class HomePage(webapp2.RequestHandler):
 
-	def get(self):
-		self.response.headers['Content-Type'] = 'text/html'
-		self.response.out.write(template.render('templates/homepage.html', {}))
+    def get(self):
+        self.response.headers['Content-Type'] = 'text/html'
+        self.response.out.write(template.render('templates/homepage.html', {}))
 
 
 class CreateDatabase(webapp2.RequestHandler):
