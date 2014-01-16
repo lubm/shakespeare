@@ -50,9 +50,10 @@ class MainPage(webapp2.RequestHandler):
         }
 
         self.response.headers['Content-Type'] = 'text/html'
-        self.response.out.write(template.render('index.html', template_values))
+        self.response.out.write(template.render('templates/index.html', template_values))
 
- class DefinePage(webapp2.RequestHandler):
+
+class DefinePage(webapp2.RequestHandler):
 
  	def get(self):
  		rpc = urlfetch.create_rpc()
@@ -63,7 +64,7 @@ class HomePage(webapp2.RequestHandler):
 
 	def get(self):
 		self.response.headers['Content-Type'] = 'text/html'
-		self.response.out.write(template.render('homepage.html', {}))
+		self.response.out.write(template.render('templates/homepage.html', {}))
 
 
 class CreateDatabase(webapp2.RequestHandler):

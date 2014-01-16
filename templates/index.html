@@ -3,7 +3,7 @@
   <head>
     <title>Search Shakespeare's Works</title>
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
-    <link rel="stylesheet" type="text/css" href="/css/layout.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/layout.css">
     <!-- Mobile friendly: support for zoom . TODO: try to access from a mobile phone-->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
   </head>
@@ -38,14 +38,18 @@
   
       <div class="row">
 
-  			<div class="col-md-8 ">
+      <div class="stats"> 
+          {{ number_results }} results ({{ time }} seconds)
+      </div>
+
+  	<div class="col-md-8 ">
           <div>
           {% if work_mentions %}
               {% for work, lines in work_mentions.items %}
-                <div class="text-success"><h3>{{ work }}</h3></div>
+                <div class="title text-danger">{{ work }}</div>
                 <i>
                 {% for line in lines %}
-                  <p>{{ line|safe }}</p>
+                  <p class="line">{{ line|safe }}</p>
                 {% endfor %}
                 </i>
               {% endfor %}
@@ -54,12 +58,11 @@
           {% endif %}
           </div>
           
-        </div>
-
-  			<div class="col-md-4 box">
-          <h3>{{ searched_word }}</h3>
-          <p>TODO:Here definition</p>
-        </div>  
+      </div>
+      <div class="col-md-4 box">
+        <h3>{{ searched_word }}</h3>
+        <p>TODO:Here definition</p>
+      </div>  
 
   		</div>
 
