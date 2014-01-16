@@ -26,7 +26,7 @@ class MainPage(webapp2.RequestHandler):
             end = time.time()
             if word:
                 # Grouping mentions by work for UI display
-                work_mentions = {}               
+                work_mentions = {}
                 for mention in word.mentions:
                     number_results += 1
                     # Making the words stay bold
@@ -74,7 +74,7 @@ class CreateDatabase(webapp2.RequestHandler):
         parser.parse()
 
         self.redirect('/')
-    
+
 application = webapp2.WSGIApplication([
     ('/', HomePage),
     ('/search', MainPage),
