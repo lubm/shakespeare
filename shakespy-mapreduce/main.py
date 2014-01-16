@@ -30,7 +30,6 @@ Bunch)"""
 import datetime
 import jinja2
 import re
-import urllib
 import webapp2
 
 from google.appengine.ext import blobstore
@@ -38,14 +37,10 @@ from google.appengine.ext import db
 
 from google.appengine.ext.webapp import blobstore_handlers
 
-from google.appengine.api import files
-from google.appengine.api import taskqueue
 from google.appengine.api import users
 
 from mapreduce import base_handler
 from mapreduce import mapreduce_pipeline
-from mapreduce import operation as op
-from mapreduce import shuffler
 
 
 class FileMetadata(db.Model):
@@ -123,12 +118,7 @@ class IndexHandler(webapp2.RequestHandler):
         filekey = self.request.get("filekey")
         blob_key = self.request.get("blobkey")
 
-        if self.request.get("word_count"):
-            pipeline = WordCountPipeline(filekey, blob_key)
-        elif self.request.get("index"):
-            pipeline = IndexPipeline(filekey, blob_key)
-        else:
-            pipeline = PhrasesPipeline(filekey, blob_key)
+        pipeline = IndexPipeline(filekey, blob_key)
 
         pipeline.start()
         self.redirect(pipeline.base_path + "/status?root=" + pipeline.pipeline_id)
@@ -172,10 +162,16 @@ class IndexPipeline(base_handler.PipelineBase):
                 "mapreduce.input_readers.BlobstoreZipInputReader",
                 "mapreduce.output_writers.BlobstoreOutputWriter",
                 mapper_params={
+                    "input_reader": {
                         "blob_key": blobkey,
+                    },
                 },
                 reducer_params={
+                    "output_writer": {
                         "mime_type": "text/plain",
+                        "output_sharding": "input",
+                        "filesystem": "blobstore",
+                    },
                 },
                 shards=16)
         yield StoreOutput("Index", filekey, output)
@@ -190,7 +186,7 @@ class StoreOutput(base_handler.PipelineBase):
         output: the blobstore location where the output of the job is stored
     """
 
-    def run(self, encoded_key, type, output):
+    def run(self, mr_type, encoded_key, output):
         key = db.Key(encoded=encoded_key)
         m = FileMetadata.get(key)
         m.index_link = output[0]
@@ -223,19 +219,10 @@ class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
         self.redirect("/")
 
 
-class DownloadHandler(blobstore_handlers.BlobstoreDownloadHandler):
-    """Handler to download blob by blobkey."""
-
-    def get(self, key):
-        key = str(urllib.unquote(key)).strip()
-        blob_info = blobstore.BlobInfo.get(key)
-        self.send_blob(blob_info)
-
 
 app = webapp2.WSGIApplication(
         [
                 ('/', IndexHandler),
                 ('/upload', UploadHandler),
-                (r'/blobstore/(.*)', DownloadHandler),
         ],
         debug=True)

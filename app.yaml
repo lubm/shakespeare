@@ -7,9 +7,6 @@ threadsafe: false
 handlers:
 - url: /css
   static_dir: css
-  
-- url: /mapreduce(/.*)?
-  script: mapreduce.main.APP
 
 - url: /.*
   script: controller.application
