@@ -3,9 +3,11 @@ import webapp2
 from google.appengine.api import urlfetch
 
 
-from main_page_controller import MainPageController
-from home_page_controller import HomePageController
+from admin_page_controller import AdminPageController
+from admin_page_controller import UploadHandler
 from create_database_controller import CreateDatabaseController
+from home_page_controller import HomePageController
+from main_page_controller import MainPageController
 
 
 class DefinePage(webapp2.RequestHandler):
@@ -18,5 +20,7 @@ class DefinePage(webapp2.RequestHandler):
 application = webapp2.WSGIApplication([
     ('/', HomePageController),
     ('/search', MainPageController),
-    ('/create_database', CreateDatabaseController)
+    ('/create_database', CreateDatabaseController),
+    ('/admin', AdminPageController),
+    ('/upload', UploadHandler),
 ], debug=True)
