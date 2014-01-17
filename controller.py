@@ -9,15 +9,24 @@ from create_database_controller import CreateDatabaseController
 from home_page_controller import HomePageController
 from main_page_controller import MainPageController
 
+import json
+import urllib2
 
-class DefinePage(webapp2.RequestHandler):
+class DefinePageController(webapp2.RequestHandler):
 
     def get(self):
-        rpc = urlfetch.create_rpc()
-        urlfetch.make_fetch_call(rpc, "http://definition-server.appspot.com/definition.define")
+        values = {
+            'term' : 'cat',
+        }
+        req = urllib2.Request("http://definition-server.appspot.com/definition.define")
+        req.add_header('Content-Type', 'application/json')
 
+        response = urllib2.urlopen(req, json.dumps(values))
+        
+        return response.read()
 
 application = webapp2.WSGIApplication([
+    ('/define', DefinePageController),
     ('/', HomePageController),
     ('/search', MainPageController),
     ('/create_database', CreateDatabaseController),
