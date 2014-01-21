@@ -15,3 +15,11 @@ class Word(ndb.Model):
   @classmethod
   def get_from_shakespeare_index(cls, word_id):
     return cls.get_by_id(word_id, parent=ndb.Key(ShakespeareConstants.root_type, ShakespeareConstants.root_key))
+
+  def group_lines_by_work(self):
+    work_lines = {}
+    for mention in self.mentions:
+        if mention.work not in work_lines:
+            work_lines[mention.work] = []
+        work_lines[mention.work].append(mention.line)
+    return work_lines
