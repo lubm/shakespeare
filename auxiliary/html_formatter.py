@@ -7,5 +7,5 @@ class HTMLFormatter(object):
         formatted_text = text
         matches = set(re.findall(pattern, text))
         for match in matches:
-            formatted_text = re.sub(match, '<%s>%s</%s>' % (tag, match, tag), formatted_text)
+            formatted_text = re.sub('\\b' + match + '\\b', '<%s>%s</%s>' % (tag, match, tag), formatted_text)
         return formatted_text
