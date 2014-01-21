@@ -13,7 +13,7 @@ class MainPageController(webapp2.RequestHandler):
     def get(self):
         searched_value = self.request.get('searched_word')
 
-        value = searched_value if searched_value else ''
+        value = searched_value.lower() if searched_value else ''
 
         work_mentions = []
         number_results = 0
@@ -24,20 +24,19 @@ class MainPageController(webapp2.RequestHandler):
             if word:
                 # Grouping mentions by work for UI display
                 work_mentions = {}
+                regex = ''
+                for letter in word.name:
+                    regex += '[' + letter + letter.upper() + ']'
                 for mention in word.mentions:
                     number_results += 1
                     # Making the words stay bold
-                    line = re.sub(value, "<b>%s</b>" % value, mention.line)
+                    line = mention.line
+                    matches = re.findall(regex, line)
+                    for match in matches:
+                        line = re.sub(match, '<b>%s</b>' % match, line)
                     if mention.work not in work_mentions:
                         work_mentions[mention.work] = []
                     work_mentions[mention.work].append(line)
-
-        print work_mentions
-        if work_mentions:
-            print "------not empty"
-        for work in work_mentions:
-            print work
-
 
         template_values = {
             'searched_word': value,
