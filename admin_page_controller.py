@@ -177,7 +177,7 @@ class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
 
         user = users.get_current_user()
 
-        username = user.nickname()
+        username = 'admin'
         date = datetime.datetime.now()
         str_blob_key = str(blob_key)
         key = FileMetadata.getKeyName(username, date, str_blob_key)
