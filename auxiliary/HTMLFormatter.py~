@@ -1,0 +1,13 @@
+import re
+
+class HTMLFormatter(object):
+
+    def makeWordReferencesBold(word, text_list):
+        regex = ''
+        formatted_text_list = []
+        for letter in word:
+            regex += '[' + letter + letter.upper() + ']'
+        for text in text_list:        
+            matches = re.findall(regex, text)
+            for match in matches:
+                formatted_text_list.append(re.sub(match, '<b>%s</b>' % match, text))

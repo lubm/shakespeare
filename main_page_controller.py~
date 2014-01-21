@@ -30,6 +30,8 @@ class MainPageController(webapp2.RequestHandler):
                             lambda line: HTMLFormatter.apply_tag_to_pattern(word_regex, 'b', line),
                             work_lines[work])
 
+        print work_lines
+
         template_values = {
             'searched_word': value,
             'work_mentions': work_lines,
