@@ -7,6 +7,8 @@ The text files are processed via mapreduce and an index is built.
 
 import time
 import datetime
+import urllib
+import logging
 import jinja2
 import re
 import webapp2
@@ -194,8 +196,19 @@ class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
         m.source = source
         m.blobkey = str_blob_key
         m.put()
-        time.sleep(5)
+        time.sleep(2)
         self.redirect("/admin")
+
+
+class DownloadHandler(blobstore_handlers.BlobstoreDownloadHandler):
+  """Handler to download blob by blobkey."""
+
+  def get(self, key):
+    key = str(urllib.unquote(key)).strip()
+    logging.debug("key is %s" % key)
+    blob_info = blobstore.BlobInfo.get(key)
+    self.send_blob(blob_info)
+
 
 
     
