@@ -1,19 +1,23 @@
 import webapp2
+from auxiliaries.definition_service import DefinitionService
 
-import json
-import urllib2
-from google.appengine.api import urlfetch
 
 class DefinePageController(webapp2.RequestHandler):
+    """Handler for Definition features.
+
+    This class contains all the logic for defining a word.
+
+    Attributes:
+        request and response are inherited from webapp2.RequestHandler.
+    """
 
     def get(self):
-        searched_value = self.request.get('searched_word')
-        values = {
-            'term' : searched_value,
-        }
-        req = urllib2.Request("http://definition-server.appspot.com/definition.define")
-        req.add_header('Content-Type', 'application/json')
-        rpc_response = urllib2.urlopen(req, json.dumps(values))
+        """Obtains the definion of the searched word.
 
-        self.response.headers['Content-Type'] = 'text/plain'        
-        self.response.out.write(rpc_response.read())
+        Gets the searched word from the request and calls the DefinitionService
+        in order to obtain its definion. Returns the result as plain text.
+        """
+        searched_value = self.request.get('searched_word')
+        word_definition = DefinitionService().define(searched_value)
+        self.response.headers['Content-Type'] = 'text/plain'
+        self.response.out.write(word_definition)
