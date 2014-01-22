@@ -93,7 +93,10 @@ class AdminPageController(webapp2.RequestHandler):
         pipeline = IndexPipeline(filekey, blob_key)
 
         pipeline.start()
-        self.redirect(pipeline.base_path + "/status?root=" + pipeline.pipeline_id)
+        #TODO: put a loading icon in the index link
+        print 'returned from pipeline.start()'
+        print 'pipeline: %s', pipeline
+        self.redirect("/admin")
 
 
 def split_into_words(s):
@@ -128,10 +131,11 @@ class IndexPipeline(base_handler.PipelineBase):
 
 
     def run(self, filekey, blobkey):
+        print 'Run IndexPipeline ************'
         output = yield mapreduce_pipeline.MapreducePipeline(
                 "index",
-                "main.index_map",
-                "main.index_reduce",
+                "admin_page_controller.index_map",
+                "admin_page_controller.index_reduce",
                 "mapreduce.input_readers.BlobstoreZipInputReader",
                 "mapreduce.output_writers.BlobstoreOutputWriter",
                 mapper_params={
@@ -147,6 +151,7 @@ class IndexPipeline(base_handler.PipelineBase):
                     },
                 },
                 shards=16)
+        print 'End of IndexPipeline ************'
         yield StoreOutput("Index", filekey, output)
 
 

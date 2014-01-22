@@ -8,12 +8,16 @@ handlers:
 - url: /static
   static_dir: static
 
+- url: /mapreduce(/.*)?
+  script: mapreduce.main.APP
+
 - url: /.*
   script: controller.application
-
-includes:
-- mapreduce/include.yaml
 
 libraries:
 - name: jinja2
   version: "2.6"
+
+includes:
+- mapreduce/include.yaml
+
