@@ -16,7 +16,8 @@ class DefinitionResponse(messages.Message):
     """Response object returned by the DefinitionService.
 
     Attributes:
-        definition: list of
+        definition: list of definitions for this word in the dictionary. If the 
+        word is not found the list will be empty.
     """
     definition = messages.StringField(1, repeated=True)
 
