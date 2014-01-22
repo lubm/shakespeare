@@ -16,7 +16,7 @@ class DefinitionResponse(messages.Message):
     """Response object returned by the DefinitionService.
 
     Attributes:
-        definition: list of definitions for this word in the dictionary. If the 
+        definition: list of definitions for this word in the dictionary. If the
         word is not found the list will be empty.
     """
     definition = messages.StringField(1, repeated=True)
@@ -26,7 +26,7 @@ class DefinitionService(remote.Service):
     """Remote Server used to define words.
 
     Attributes:
-        service: Definition services address. 
+        service: Definition services address.
     """
     def __init__(self):
         """DefinitionService initialization.
@@ -39,11 +39,11 @@ class DefinitionService(remote.Service):
 
     @remote.method(DefinitionRequest, DefinitionResponse)
     def define(self, request):
-        """Performs an RPC call to the definition service to obtain the first 
+        """Performs an RPC call to the definition service to obtain the first
         definiton of the word.
 
         Args:
-            request: DefinitionRequest object containing the word to be defined 
+            request: DefinitionRequest object containing the word to be defined
             by the definition service.
 
         Returns:
