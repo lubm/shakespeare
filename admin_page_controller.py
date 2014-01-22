@@ -101,8 +101,6 @@ class AdminPageController(webapp2.RequestHandler):
 
         pipeline.start()
         #TODO: put a loading icon in the index link
-        print 'returned from pipeline.start()'
-        print 'pipeline: %s', pipeline
         self.redirect("/admin")
 
 
@@ -174,7 +172,6 @@ class IndexPipeline(base_handler.PipelineBase):
                     },
                 },
                 shards=16)
-        print 'End of IndexPipeline ************'
         yield StoreOutput("Index", filekey, output)
 
 
