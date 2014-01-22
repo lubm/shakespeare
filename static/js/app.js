@@ -13,7 +13,7 @@ window.onload = function() {
 			definitionDiv.removeChild(loadingDefinitionDiv);
 			definitionDiv.appendChild(definitionDivContent);
 		}
-	}
+	};
 
 	shakespy.url = "/define";
 	shakespy.searchedWord = document.getElementById('search-value').value;
