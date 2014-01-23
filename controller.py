@@ -1,7 +1,8 @@
+""" Routes for each group of actions with their handlers."""
 
+# F:  2, 0: Unable to import 'webapp2'
+# pylint: disable=F0401
 import webapp2
-from google.appengine.api import urlfetch
-
 
 from admin_page_controller import AdminPageController
 from admin_page_controller import DownloadHandler
@@ -9,16 +10,10 @@ from admin_page_controller import UploadHandler
 from create_database_controller import CreateDatabaseController
 from home_page_controller import HomePageController
 from main_page_controller import MainPageController
-
-
-class DefinePage(webapp2.RequestHandler):
-
-    def get(self):
-        rpc = urlfetch.create_rpc()
-        urlfetch.make_fetch_call(rpc, "http://definition-server.appspot.com/definition.define")
-
+from define_page_controller import DefinePageController
 
 application = webapp2.WSGIApplication([
+    ('/define', DefinePageController),
     ('/', HomePageController),
     ('/search', MainPageController),
     ('/create_database', CreateDatabaseController),
