@@ -12,7 +12,7 @@ handlers:
   script: mapreduce.main.APP
 
 - url: /.*
-  script: controller.application
+  script: main.APP
 
 libraries:
 - name: jinja2

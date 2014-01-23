@@ -1,3 +1,5 @@
+# TODO(luciana): Remove this after removing the parent
+
 class ShakespeareConstants:
 
 	# Root key information for words' datastore index

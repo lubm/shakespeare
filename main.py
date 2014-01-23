@@ -1,23 +1,18 @@
-""" Routes for each group of actions with their handlers."""
-
-# F:  2, 0: Unable to import 'webapp2'
-# pylint: disable=F0401
+"""Defines the application handlers"""
 import webapp2
 
 from admin_page_controller import AdminPageController
 from admin_page_controller import DownloadHandler
 from admin_page_controller import UploadHandler
-from create_database_controller import CreateDatabaseController
 from home_page_controller import HomePageController
-from main_page_controller import MainPageController
+from results_page_controller import ResultsPageController
 from define_page_controller import DefinePageController
 
-application = webapp2.WSGIApplication([
-    ('/define', DefinePageController),
+APP = webapp2.WSGIApplication([
     ('/', HomePageController),
-    ('/search', MainPageController),
-    ('/create_database', CreateDatabaseController),
+    ('/search', ResultsPageController),
     ('/admin', AdminPageController),
     ('/upload', UploadHandler),
     (r'/blobstore/(.*)', DownloadHandler),
+    ('/define', DefinePageController)
 ], debug=True)

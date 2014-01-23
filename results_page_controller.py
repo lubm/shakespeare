@@ -1,22 +1,25 @@
+"""Module for handling the search results page requests"""
+
 import cgi
-
-from google.appengine.ext.webapp import template
-
-import re
 import webapp2
 import time
+
+from google.appengine.ext.webapp import template
 
 from models.word import Word
 from auxiliary.html_formatter import HTMLFormatter
 from auxiliary.regex_formatter import RegexFormatter
 
-class MainPageController(webapp2.RequestHandler):
+
+class ResultsPageController(webapp2.RequestHandler):
+    """Class for rendering search results"""
 
     def get(self):
+        """Renders the results of a search"""
         searched_value = self.request.get('searched_word')
-
         value = searched_value.lower() if searched_value else ''
 
+        # TODO(luciana): Refactor into shorter functions
         work_lines = {}
         if value:
             start = time.time()
@@ -26,18 +29,22 @@ class MainPageController(webapp2.RequestHandler):
                 word_regex = RegexFormatter.get_any_case_word_regex(word.name)
                 work_lines = word.group_lines_by_work()
                 for work in work_lines:
+                    #TODO(luciana): Highlight on javascript
                     work_lines[work] = map(
-                            lambda line: HTMLFormatter.apply_tag_to_pattern(word_regex, 'b', line),
-                            work_lines[work])
-        
+                        lambda line: HTMLFormatter.apply_tag_to_pattern(
+                            word_regex, 'b', line),
+                        work_lines[work])
+
         template_values = {
             'searched_word': value,
             'work_mentions': work_lines,
+            #TODO(luciana): Create a separate function, change to list
+            # comprehension
             'number_results': reduce(lambda x, y: x + len(y),
                 work_lines.values(), 0),
             'time': round(end - start, 4)
         }
 
         self.response.headers['Content-Type'] = 'text/html'
-        self.response.out.write(template.render('templates/index.html', template_values))
-
+        self.response.out.write(template.render('templates/index.html',
+            template_values))
