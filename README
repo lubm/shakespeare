@@ -1,0 +1,20 @@
+Our proyect allows the user to upload a single zip file in using the /admin 
+page. This is only needed if the database is not loaded
+
+Clicking on the Index button will start a MapReduce task and save the results in
+the ndb database.
+The results can also be seen in a file that becomes available after the 
+completion of this job using a link that will appear in the index_link column 
+after the completion of job.
+For the moment you need to reload the page to see this link. The process takes 
+approximately 7 minutes for the shortest shakespeare file (lover's complaint).
+We are planning to have users and to allow only admin users to access this page.
+This is not implemented yet.
+
+
+The word search is ready and also the RPC call with Javascript. We don't have 
+error handling for this yet.
+
+
+
+
