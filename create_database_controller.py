@@ -1,5 +1,5 @@
 import webapp2
-from auxiliaries.parser import Parser
+from auxiliary.parser import Parser
 
 class CreateDatabaseController(webapp2.RequestHandler):
 

@@ -1,6 +1,6 @@
 import webapp2
-from auxiliaries.definition_service import DefinitionService
-from auxiliaries.definition_service import DefinitionRequest
+from auxiliary.definition_service import DefinitionService
+from auxiliary.definition_service import DefinitionRequest
 
 class DefinePageController(webapp2.RequestHandler):
     """Handler for Definition features.

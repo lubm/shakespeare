@@ -7,6 +7,8 @@ The text files are processed via mapreduce and an index is built.
 
 import time
 import datetime
+import urllib
+import logging
 import jinja2
 import re
 import webapp2
@@ -17,6 +19,11 @@ from google.appengine.api import users
 from google.appengine.ext.webapp import blobstore_handlers
 from mapreduce import base_handler
 from mapreduce import mapreduce_pipeline
+from models.mention import Mention
+from models.word import Word
+from resources.constants import ShakespeareConstants
+
+from google.appengine.ext import ndb
 
 class FileMetadata(db.Model):
     """A helper class that will hold metadata for the user's blobs.
@@ -93,7 +100,8 @@ class AdminPageController(webapp2.RequestHandler):
         pipeline = IndexPipeline(filekey, blob_key)
 
         pipeline.start()
-        self.redirect(pipeline.base_path + "/status?root=" + pipeline.pipeline_id)
+        #TODO: put a loading icon in the index link
+        self.redirect("/admin")
 
 
 def split_into_words(s):
@@ -103,18 +111,35 @@ def split_into_words(s):
     return s.split()
 
 
+def get_title(text):
+    """Get title of work (first non-empty line)."""
+    title = ''
+    for line in text.split('\n'):
+        title = line.strip()
+        title = ' '.join(word[0].upper() + word[1:].lower() for word in title.split())
+        if title:
+           return title
+
+
 def index_map(data):
     """Index map function."""
     (entry, text_fn) = data
     text = text_fn()
-
-    for l in text.split("\n"):
-        for w in split_into_words(l.lower()):
-            yield (w, l)
+    title = get_title(text)
+    for line in text.split("\n"):
+        for word in split_into_words(line.lower()):
+            yield (word, title + '++' + line)
 
 
 def index_reduce(key, values):
     """Index reduce function."""
+    parent = ndb.Key(ShakespeareConstants.root_type, ShakespeareConstants.root_key)
+    word = Word(parent=parent, id=key, name=key)
+    word.mentions = []
+    for value in values:
+        split_value = value.split('++')
+        word.mentions.append(Mention(work=split_value[0], line=split_value[1]))
+    word.put()
     yield "%s: %s\n" % (key, list(set(values)))
 
 
@@ -130,8 +155,8 @@ class IndexPipeline(base_handler.PipelineBase):
     def run(self, filekey, blobkey):
         output = yield mapreduce_pipeline.MapreducePipeline(
                 "index",
-                "main.index_map",
-                "main.index_reduce",
+                "admin_page_controller.index_map",
+                "admin_page_controller.index_reduce",
                 "mapreduce.input_readers.BlobstoreZipInputReader",
                 "mapreduce.output_writers.BlobstoreOutputWriter",
                 mapper_params={
@@ -177,7 +202,7 @@ class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
 
         user = users.get_current_user()
 
-        username = user.nickname()
+        username = 'admin'
         date = datetime.datetime.now()
         str_blob_key = str(blob_key)
         key = FileMetadata.getKeyName(username, date, str_blob_key)
@@ -189,8 +214,19 @@ class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
         m.source = source
         m.blobkey = str_blob_key
         m.put()
-        time.sleep(5)
+        time.sleep(2)
         self.redirect("/admin")
+
+
+class DownloadHandler(blobstore_handlers.BlobstoreDownloadHandler):
+  """Handler to download blob by blobkey."""
+
+  def get(self, key):
+    key = str(urllib.unquote(key)).strip()
+    logging.debug("key is %s" % key)
+    blob_info = blobstore.BlobInfo.get(key)
+    self.send_blob(blob_info)
+
 
 
     

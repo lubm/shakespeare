@@ -5,6 +5,7 @@
 import webapp2
 
 from admin_page_controller import AdminPageController
+from admin_page_controller import DownloadHandler
 from admin_page_controller import UploadHandler
 from create_database_controller import CreateDatabaseController
 from home_page_controller import HomePageController
@@ -18,4 +19,5 @@ application = webapp2.WSGIApplication([
     ('/create_database', CreateDatabaseController),
     ('/admin', AdminPageController),
     ('/upload', UploadHandler),
+    (r'/blobstore/(.*)', DownloadHandler),
 ], debug=True)
