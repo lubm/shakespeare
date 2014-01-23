@@ -5,8 +5,8 @@ Definition Service. Contains the Request and Response objects and also the
 definition service wrapper.
 """
 
-from protorpc import remote
 from protorpc import messages
+from protorpc import remote
 from protorpc.transport import HttpTransport
 
 class DefinitionRequest(messages.Message):
@@ -55,4 +55,5 @@ class DefinitionService(remote.Service):
             A DefinitionResponse object containing a list of definitions for the
             searched word.
         """
+        # TODO: Catch Failing requests and allow the user to retry.
         return self.service.define(request)

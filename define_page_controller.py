@@ -1,4 +1,5 @@
 import webapp2
+
 from auxiliary.definition_service import DefinitionService
 from auxiliary.definition_service import DefinitionRequest
 
