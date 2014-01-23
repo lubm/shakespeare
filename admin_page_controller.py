@@ -39,8 +39,8 @@ class FileMetadata(db.Model):
     an illegal set of characters for an e-mail address to contain.
     """
 
-    __SEP = ".."
-    __NEXT = "./"
+    __SEP = '..'
+    __NEXT = './'
 
     owner = db.UserProperty()
     filename = db.StringProperty()
@@ -73,7 +73,7 @@ class FileMetadata(db.Model):
 
 class AdminPageController(webapp2.RequestHandler):
     
-    template_env = jinja2.Environment(loader=jinja2.FileSystemLoader("templates"),
+    template_env = jinja2.Environment(loader=jinja2.FileSystemLoader('templates'),
                                                                         autoescape=True)
 
     def get(self):
@@ -85,17 +85,17 @@ class AdminPageController(webapp2.RequestHandler):
         items = [result for result in results]
         length = len(items)
 
-        upload_url = blobstore.create_upload_url("/upload")
+        upload_url = blobstore.create_upload_url('/upload')
 
-        self.response.out.write(self.template_env.get_template("admin.html").render(
-                {"username": 'admin',
-                  "items": items,
-                  "length": length,
-                  "upload_url": upload_url}))
+        self.response.out.write(self.template_env.get_template('admin.html').render(
+                {'username': 'admin',
+                  'items': items,
+                  'length': length,
+                  'upload_url': upload_url}))
 
     def post(self):
-        filekey = self.request.get("filekey")
-        blob_key = self.request.get("blobkey")
+        filekey = self.request.get('filekey')
+        blob_key = self.request.get('blobkey')
 
         pipeline = IndexPipeline(filekey, blob_key)
 
@@ -103,13 +103,13 @@ class AdminPageController(webapp2.RequestHandler):
         #TODO: put a loading icon in the index link
         print 'returned from pipeline.start()'
         print 'pipeline: %s', pipeline
-        self.redirect("/admin")
+        self.redirect('/admin')
 
 
 def split_into_words(s):
     """Split a sentence into list of words."""
-    s = re.sub(r"\W+", " ", s)
-    s = re.sub(r"[_0-9]+", " ", s)
+    s = re.sub(r'\W+', ' ', s)
+    s = re.sub(r'[_0-9]+', ' ', s)
     return s.split()
 
 
@@ -128,21 +128,34 @@ def index_map(data):
     (entry, text_fn) = data
     text = text_fn()
     title = get_title(text)
-    for line in text.split("\n"):
+    for line in text.split('\n'):
         for word in split_into_words(line.lower()):
-            yield (word, title + '++' + line)
+            yield (word + '++' + title, line)
 
 
 def index_reduce(key, values):
     """Index reduce function."""
-    parent = ndb.Key(ShakespeareConstants.root_type, ShakespeareConstants.root_key)
-    word = Word(parent=parent, id=key, name=key)
-    word.mentions = []
-    for value in values:
-        split_value = value.split('++')
-        word.mentions.append(Mention(work=split_value[0], line=split_value[1]))
+    root = ndb.Key(ShakespeareConstants.root_type, ShakespeareConstants.root_key)
+
+    keys = key.split('++')
+    word_id = keys[0]
+    work_id = keys[1]
+    
+    word = Word.get_by_id(word_id, parent=word_parent)
+    if not word:
+        word = Word(parent=root, id=word_id, name=word_key)
+        word.works = []
+    
+    work = Work(parent=word.key, id=work_id, name=work_id)
+    work.mentions = []
+    word.works.append(work)
+
+    for line in values:
+        work.mentions.append(Mention(line=line))
+    
     word.put()
-    yield "%s: %s\n" % (key, list(set(values)))
+    
+    yield '%s: %s\n' % (key, list(set(values)))
 
 
 class IndexPipeline(base_handler.PipelineBase):
@@ -156,26 +169,26 @@ class IndexPipeline(base_handler.PipelineBase):
 
     def run(self, filekey, blobkey):
         output = yield mapreduce_pipeline.MapreducePipeline(
-                "index",
-                "admin_page_controller.index_map",
-                "admin_page_controller.index_reduce",
-                "mapreduce.input_readers.BlobstoreZipInputReader",
-                "mapreduce.output_writers.BlobstoreOutputWriter",
+                'index',
+                'admin_page_controller.index_map',
+                'admin_page_controller.index_reduce',
+                'mapreduce.input_readers.BlobstoreZipInputReader',
+                'mapreduce.output_writers.BlobstoreOutputWriter',
                 mapper_params={
-                    "input_reader": {
-                        "blob_key": blobkey,
+                    'input_reader': {
+                        'blob_key': blobkey,
                     },
                 },
                 reducer_params={
-                    "output_writer": {
-                        "mime_type": "text/plain",
-                        "output_sharding": "input",
-                        "filesystem": "blobstore",
+                    'output_writer': {
+                        'mime_type': 'text/plain',
+                        'output_sharding': 'input',
+                        'filesystem': 'blobstore',
                     },
                 },
                 shards=16)
         print 'End of IndexPipeline ************'
-        yield StoreOutput("Index", filekey, output)
+        yield StoreOutput('Index', filekey, output)
 
 
 class StoreOutput(base_handler.PipelineBase):
@@ -198,10 +211,10 @@ class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
     """Handler to upload data to blobstore."""
 
     def post(self):
-        source = "uploaded by user"
-        upload_files = self.get_uploads("file")
+        source = 'uploaded by user'
+        upload_files = self.get_uploads('file')
         blob_key = upload_files[0].key()
-        name = self.request.get("name")
+        name = self.request.get('name')
 
         user = users.get_current_user()
 
@@ -218,7 +231,7 @@ class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
         m.blobkey = str_blob_key
         m.put()
         time.sleep(2)
-        self.redirect("/admin")
+        self.redirect('/admin')
 
 
 class DownloadHandler(blobstore_handlers.BlobstoreDownloadHandler):
@@ -226,7 +239,7 @@ class DownloadHandler(blobstore_handlers.BlobstoreDownloadHandler):
 
   def get(self, key):
     key = str(urllib.unquote(key)).strip()
-    logging.debug("key is %s" % key)
+    logging.debug('key is %s' % key)
     blob_info = blobstore.BlobInfo.get(key)
     self.send_blob(blob_info)
 
