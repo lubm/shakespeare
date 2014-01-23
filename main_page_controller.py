@@ -17,7 +17,7 @@ class MainPageController(webapp2.RequestHandler):
 
         value = searched_value.lower() if searched_value else ''
 
-        work_lines = []
+        work_lines = {}
         if value:
             start = time.time()
             word = Word.get_from_shakespeare_index(cgi.escape(value))
@@ -29,11 +29,12 @@ class MainPageController(webapp2.RequestHandler):
                     work_lines[work] = map(
                             lambda line: HTMLFormatter.apply_tag_to_pattern(word_regex, 'b', line),
                             work_lines[work])
-
+        
         template_values = {
             'searched_word': value,
             'work_mentions': work_lines,
-            'number_results': len(work_lines.values()) if work_lines else 0,
+            'number_results': reduce(lambda x, y: x + len(y),
+                work_lines.values(), 0),
             'time': round(end - start, 4)
         }
 
