@@ -12,14 +12,6 @@ class Word(ndb.Model):
 #    def __init__(self):
 #        works = []
 
-    @classmethod
-    def query_repo(cls, ancestor_key):
-        return cls.query(ancestor=ancestor_key)
-
-    # TODO: REFACTOR THIS SOLUTION
-    @classmethod
-    def get_from_shakespeare_index(cls, word_id):
-        return cls.get_by_id(word_id, parent=ndb.Key(ShakespeareConstants.root_type, ShakespeareConstants.root_key))
 
 #    def group_lines_by_work(self):
 #        work_lines = {}
