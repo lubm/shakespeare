@@ -101,9 +101,7 @@ class AdminPageController(webapp2.RequestHandler):
 
         pipeline.start()
         #TODO: put a loading icon in the index link
-        print 'returned from pipeline.start()'
-        print 'pipeline: %s', pipeline
-        self.redirect('/admin')
+        self.redirect("/admin")
 
 
 def split_into_words(s):
@@ -187,8 +185,7 @@ class IndexPipeline(base_handler.PipelineBase):
                     },
                 },
                 shards=16)
-        print 'End of IndexPipeline ************'
-        yield StoreOutput('Index', filekey, output)
+        yield StoreOutput("Index", filekey, output)
 
 
 class StoreOutput(base_handler.PipelineBase):

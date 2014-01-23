@@ -1,23 +1,25 @@
+"""Module for handling the search results page requests"""
+
 import cgi
-
-from google.appengine.ext.webapp import template
-
 import re
 import webapp2
 import time
+
+from google.appengine.ext.webapp import template
 
 from models.word import Word
 from auxiliary.html_formatter import HTMLFormatter
 from auxiliary.regex_formatter import RegexFormatter
 
-class MainPageController(webapp2.RequestHandler):
+class ResultsPageController(webapp2.RequestHandler):
+    """Class for rendering search results"""
 
     def get(self):
+        """Renders the results of a search"""
         searched_value = self.request.get('searched_word')
-
         value = searched_value.lower() if searched_value else ''
 
-        work_lines = []
+        work_lines = {}
         if value:
             start = time.time()
             word = Word.get_from_shakespeare_index(cgi.escape(value))
