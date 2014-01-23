@@ -1,5 +1,3 @@
-var shakespy = {};
-
 window.onload = function() {
 	shakespy.http = new XMLHttpRequest();
 
