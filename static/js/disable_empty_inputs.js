@@ -6,11 +6,7 @@ $(document).ready(function(){
     $('#search-button').attr('disabled', disable);
 
     $('#search-value').keyup(function(){
-        if($(this).val().length > 0){
-            disabled = false;
-        } else {
-        	disabled = true;
-        }
+        disabled = ($(this).val().length > 0) ? false : true;
        	$('#search-button').attr('disabled', disabled);
     });
 });
