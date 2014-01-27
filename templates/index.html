@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <title>Search Shakespeare's Works</title>
+    <script src="static/js/load_definition.js"></script>
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="/static/css/layout.css">
     <!-- Mobile friendly: support for zoom . TODO: try to access from a mobile phone-->
@@ -60,8 +61,8 @@
           
       </div>
       <div class="col-md-4 box">
-        <h3>{{ searched_word }}</h3>
-        <p>TODO:Here definition</p>
+        <h3>{{ searched_word }}'s definition:</h3>
+        <p id='definition'><i id='loading_message'>Loading...</i></p>
       </div>  
 
   		</div>
