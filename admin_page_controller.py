@@ -135,25 +135,22 @@ def index_map(data):
 
 def index_reduce(key, values):
     """Index reduce function."""
-    root = ndb.Key(ShakespeareConstants.root_type, ShakespeareConstants.root_key)
-
     keys = key.split('++')
     word_id = keys[0]
     work_id = keys[1]
     
-    word = Word.get_by_id(word_id, parent=word_parent)
+    word = Word.get_by_id(word_id)
     if not word:
-        word = Word(parent=root, id=word_id, name=word_key)
-        word.works = []
+        word = Word(id=word_id, name=word_key)
     
-    work = Work(parent=word.key, id=work_id, name=work_id)
-    work.mentions = []
-    word.works.append(work)
+    mentions_work = MentionsInWork(parent=word.key, id=work_id, name=work_id)
+    mentions_work.mentions = []
 
     for line in values:
-        work.mentions.append(Mention(line=line))
+        mentions_work.mentions.append(line)
     
     word.put()
+    mentions_work.put()
     
     yield '%s: %s\n' % (key, list(set(values)))
 
