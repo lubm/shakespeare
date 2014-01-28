@@ -25,19 +25,33 @@ from resources.constants import ShakespeareConstants
 
 from google.appengine.ext import ndb
 
+
+class Parent(db.Model):
+    """ A dumb parent class.
+
+    This is just a stub to make the FileMetaData class have a parent. The parent
+    is necessary to be able to perform ancestor queries, that can be put inside
+    transactions. A transaction is needed to ensure data consistency when the
+    results are queried.
+    """
+    pass
+
+
+PARENT = Parent(key_name='parent')
+
+
 class FileMetadata(db.Model):
     """A helper class that will hold metadata for the user's blobs.
 
-    Specifially, we want to keep track of who uploaded it, where they
-    uploaded it from (right now they can only upload from their compu-
-    ter, but in the future urlfetch would be nice to add), and links
-    to the results of their MR jobs. To enable our querying to scan over
-    our input data, we store keys in the form 'user/date/blob_key',
-    where 'user' is the given user's e-mail address, 'date' is the date
-    and time that they uploaded the item on, and 'blob_key' indicates the
-    location in the Blobstore that the item can be found at. '/' is not
-    the actual separator between these values - we use '..' since it is
-    an illegal set of characters for an e-mail address to contain.
+    Specifially, we want to keep track of who uploaded it, where they uploaded
+    it from (right now they can only upload from their computer, but in the
+    future urlfetch would be nice to add), and links to the results of their MR
+    jobs. To enable our querying to scan over our input data, we store keys in
+    the form 'user/date/blob_key', where 'user' is the given user's e-mail
+    address, 'date' is the date and time that they uploaded the item on, and
+    'blob_key' indicates the location in the Blobstore that the item can be
+    found at. '/' is not the actual separator between these values - we use '..'
+    since it is an illegal set of characters for an e-mail address to contain.
     """
 
     __SEP = '..'
@@ -74,44 +88,45 @@ class FileMetadata(db.Model):
 
 
 class AdminPageController(webapp2.RequestHandler):
-    """A controller to the admin page, that handles the upload of works to the
-    database. The map-reduce job is triggered on this page also."""
+    """A controller to the admin page.
+    
+    It handles the upload of works to the database. The map-reduce job is
+    triggered on this page also."""
 
     template_env = jinja2.Environment(
-        loader=jinja2.FileSystemLoader("templates"), autoescape=True)
+        loader=jinja2.FileSystemLoader('templates'), autoescape=True)
 
+    @db.transactional
     def get(self):
-        """Displays current zip files loaded to the database and correspondant
-        results after map reduce."""
-        #user = users.get_current_user()
-        #username = user.nickname()
+        """Displays current zip files in the database mapreduce results."""
 
-        results = FileMetadata.all()
+        results_query = FileMetadata.all()
+        results_query.ancestor(PARENT)
 
-        items = [result for result in results]
+        items = [result for result in results_query.run()]
         length = len(items)
 
         upload_url = blobstore.create_upload_url('/upload')
 
         self.response.out.write(self.template_env.get_template(
-            "admin.html").render(
-                {"username": 'admin',
-                  "items": items,
-                  "length": length,
-                  "upload_url": upload_url}))
+            'admin.html').render(
+                {'username': 'admin',
+                  'items': items,
+                  'length': length,
+                  'upload_url': upload_url}))
 
     def post(self):
         """Start map reduce job on selected file."""
         #clear_database()
 
-        filekey = self.request.get("filekey")
-        blob_key = self.request.get("blobkey")
+        filekey = self.request.get('filekey')
+        blob_key = self.request.get('blobkey')
 
         pipeline = IndexPipeline(filekey, blob_key)
 
         pipeline.start()
         #TODO(Caro): put a loading icon in the index link
-        self.redirect("/admin")
+        self.redirect('/admin')
 
 
 def clear_database():
@@ -119,11 +134,11 @@ def clear_database():
     db.delete(db.Query(keys_only=True))
 
 
-def get_words(sentence):
-    """Split a sentence into list of words."""
-    sentence = re.sub(r"\W+", " ", sentence)
-    sentence = re.sub(r"[_0-9]+", " ", sentence)
-    return set(sentence.split())
+def get_words(line):
+    """Split a line into list of words."""
+    line = re.sub(r'\W+', ' ', line)
+    line = re.sub(r'[_0-9]+', ' ', line)
+    return set(line.split())
 
 
 def get_title(text):
@@ -137,25 +152,45 @@ def get_title(text):
             return title
 
 
+SEP = '++'
+
 def index_map(data):
-    """Index map function."""
+    """Index map function.
+    
+    Args:
+        data: Refers to a line from the input files. Is actually composed of a
+            tuple (lineinfo, line). This is the return value from the
+            ZipLineInputReader, available in the input readers of mapreduce.
+    
+    Yields:
+
+        The map function can not return a tuple (word, title) as key, it needs to
+        return a string. So instead of returning a tuple, we return a string composed
+        of {word}SEP{title}. SEP is separator constant. 
+    """
     (info, line) = data
     title = info[1]
     for word in get_words(line.lower()):
-        yield (word + '++' + title, line)
+        yield (word + SEP + title, line)
 
 
 def index_reduce(key, values):
-    """Index reduce function."""
-    keys = key.split('++')
-    word_id = keys[0]
-    work_id = keys[1]
+    """Index reduce function.
+
+    Args:
+        key: a string in the format {word}SEP{work}
+        values: the lines in which {word} appears in {work}
     
-    word = Word.get_by_id(word_id)
+    """
+    keys = key.split(SEP)
+    word_value = keys[0]
+    work_value = keys[1]
+    
+    word = Word.get_by_id(word_value)
     if not word:
-        word = Word(id=word_id, name=word_id)
+        word = Word(id=word_value, name=word_value)
     
-    work = Work(parent=word.key, id=work_id, title=work_id)
+    work = Work(parent=word.key, id=work_value, title=work_value)
     work.mentions = []
 
     for line in values:
@@ -197,7 +232,7 @@ class IndexPipeline(base_handler.PipelineBase):
                     },
                 },
                 shards=16)
-        yield StoreOutput("Index", filekey, output)
+        yield StoreOutput(filekey, output)
 
 
 class StoreOutput(base_handler.PipelineBase):
@@ -208,8 +243,7 @@ class StoreOutput(base_handler.PipelineBase):
         output: the blobstore location where the output of the job is stored
     """
 
-    def run(self, mr_type, encoded_key, output):
-        #TODO(izabela): Find a way to remove mr_type without breaking the code
+    def run(self, encoded_key, output):
         """ Store result of map reduce job."""
         key = db.Key(encoded=encoded_key)
         meta = FileMetadata.get(key)
@@ -223,10 +257,10 @@ class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
     def post(self):
         """Handle the upload of zipfiles that will later ve processed via map
         reduce."""
-        source = "uploaded by user"
-        upload_files = self.get_uploads("file")
+        source = 'uploaded by user'
+        upload_files = self.get_uploads('file')
         blob_key = upload_files[0].key()
-        name = self.request.get("name")
+        name = self.request.get('name')
         #TODO(izabela): handle empty string better
 
         user = users.get_current_user()
@@ -236,16 +270,18 @@ class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
         str_blob_key = str(blob_key)
         key = FileMetadata.get_key_name(username, date, str_blob_key)
 
-        meta = FileMetadata(key_name = key)
+        ctx = ndb.get_context()
+        meta = FileMetadata(key_name=key, parent=PARENT)
         meta.owner = user
         meta.filename = name
         meta.uploaded_on = date
         meta.source = source
         meta.blobkey = str_blob_key
         meta.put()
-        time.sleep(2)
+        ctx.clear_cache()
+        #time.sleep(2)
         #TODO(izabela): Replace the sleep with waiting for completion
-        self.redirect("/admin")
+        self.redirect('/admin')
 
 
 class DownloadHandler(blobstore_handlers.BlobstoreDownloadHandler):
@@ -254,6 +290,6 @@ class DownloadHandler(blobstore_handlers.BlobstoreDownloadHandler):
     def get(self, key):
         """ Handle download of zip files and map reduce results."""
         key = str(urllib.unquote(key)).strip()
-        logging.debug("key is %s", key)
+        logging.debug('key is %s', key)
         blob_info = blobstore.BlobInfo.get(key)
         self.send_blob(blob_info)
