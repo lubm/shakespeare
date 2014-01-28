@@ -22,16 +22,11 @@
  * @param {string} filename The name that the user has chosen to give this input
  *     file upon uploading it.
  */
-function updateForm(filekey, blobkey, filename) {
-  document.getElementById('jobName').innerText = filename;
-  document.getElementById('filekey').value = filekey;
-  document.getElementById('blobkey').value = blobkey;
-  document.getElementById('index').removeAttribute('disabled');
-  
-  //$('#jobName').text(filename);
-  //$('#filekey').val(filekey);
-  //$('#blobkey').val(blobkey);
 
-  //$('#index').removeAttr('disabled');
+function updateForm(filekey, blobkey, filename) {
+  $('#jobName').innerText = filename;
+  $('#filekey').value = filekey;
+  $('#blobkey').value = blobkey;
+  $('#index').attr("disabled", false);
 }
 

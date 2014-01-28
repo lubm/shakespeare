@@ -1,6 +1,6 @@
 var shakespy = {};
 
-window.onload = function() {
+$(window).load(function() {
 	shakespy.http = new XMLHttpRequest();
 
 	shakespy.http.onreadystatechange = function() {
@@ -19,4 +19,4 @@ window.onload = function() {
 	shakespy.searchedWord = document.getElementById('search-value').value;
 	shakespy.http.open("GET", shakespy.url + "?searched_word=" + shakespy.searchedWord, true);
 	shakespy.http.send(null);
-};
+});
