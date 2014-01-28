@@ -20,8 +20,8 @@ from google.appengine.ext.webapp import blobstore_handlers
 from mapreduce import base_handler
 from mapreduce import mapreduce_pipeline
 from models.word import Word
-from models.work import Work
-from resources.constants import ShakespeareConstants
+from models.word_mentions_in_work import WordMentionsInWork
+from resources.constants import Constants
 
 from google.appengine.ext import ndb
 
@@ -150,14 +150,15 @@ def index_reduce(key, values):
     if not word:
         word = Word(id=word_id, name=word_id)
     
-    work = Work(parent=word.key, id=work_id, title=work_id)
-    work.mentions = []
+    mentions_in_work = WordMentionsInWork(parent=word.key, id=work_id, 
+        title=work_id)
+    mentions_in_work.mentions = []
 
     for line in values:
-        work.mentions.append(line)
+        mentions_in_work.mentions.append(line)
     
     word.put()
-    work.put()
+    mentions_in_work.put()
     
     yield '%s: %s\n' % (key, list(set(values)))
 
