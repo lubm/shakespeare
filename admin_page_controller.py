@@ -139,12 +139,10 @@ def get_title(text):
 
 def index_map(data):
     """Index map function."""
-    (_, text_fn) = data
-    text = text_fn()
-    title = get_title(text)
-    for line in text.split('\n'):
-        for word in get_words(line.lower()):
-            yield (word + '++' + title, line)
+    (info, line) = data
+    title = info[1]
+    for word in get_words(line.lower()):
+        yield (word + '++' + title, line)
 
 
 def index_reduce(key, values):
@@ -184,11 +182,11 @@ class IndexPipeline(base_handler.PipelineBase):
                 'index',
                 'admin_page_controller.index_map',
                 'admin_page_controller.index_reduce',
-                'mapreduce.input_readers.BlobstoreZipInputReader',
+                'mapreduce.input_readers.BlobstoreZipLineInputReader',
                 'mapreduce.output_writers.BlobstoreOutputWriter',
                 mapper_params={
                     'input_reader': {
-                        'blob_key': blobkey,
+                        'blob_keys': blobkey,
                     },
                 },
                 reducer_params={
