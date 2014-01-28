@@ -102,8 +102,6 @@ class AdminPageController(webapp2.RequestHandler):
 
     def post(self):
         """Start map reduce job on selected file."""
-        #clear_database()
-
         filekey = self.request.get("filekey")
         blob_key = self.request.get("blobkey")
 
@@ -112,11 +110,6 @@ class AdminPageController(webapp2.RequestHandler):
         pipeline.start()
         #TODO(Caro): put a loading icon in the index link
         self.redirect("/admin")
-
-
-def clear_database():
-    """Clears the database for the new loading."""
-    db.delete(db.Query(keys_only=True))
 
 
 def get_words(sentence):
@@ -259,3 +252,11 @@ class DownloadHandler(blobstore_handlers.BlobstoreDownloadHandler):
         logging.debug("key is %s", key)
         blob_info = blobstore.BlobInfo.get(key)
         self.send_blob(blob_info)
+
+class ClearDatastoreHandler(webapp2.RequestHandler):
+    """Handler to clear the datastore"""
+
+    def get(self):
+        """Clears the datastore."""
+        db.delete(db.Query(keys_only=True))
+        self.redirect('/admin')
