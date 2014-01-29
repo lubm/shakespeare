@@ -24,9 +24,12 @@
  */
 
 function updateForm(filekey, blobkey, filename) {
-  $('#jobName').innerText = filename;
-  $('#filekey').value = filekey;
-  $('#blobkey').value = blobkey;
+  console.log(filekey);
+  console.log(blobkey);
+  console.log(filename);
+  $('#jobName').text(filename);
+  $('#filekey').val(filekey);
+  $('#blobkey').val(blobkey);
   $('#index').attr("disabled", false);
 }
 
