@@ -1,9 +1,13 @@
-""" This module handles the admin page, in which it is possible to upload fles.
+""" Handle the admin page, that allows to upload works.
 
-The text files are processed via mapreduce and an index is built.
+An index that permits the rapid and easy retrieval of the lines in which a given
+word is present is built. This index is built according to the following
+structure:
+    (word, work): line
+This way whhen the user query for a word the results can be shown grouped by
+work, giving a more pleasant view to the user.
+
 """
-
-#TODO(izabela): Explain better the index in the docstring above
 
 import time
 import datetime
@@ -279,8 +283,6 @@ class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
         meta.blobkey = str_blob_key
         meta.put()
         ctx.clear_cache()
-        #time.sleep(2)
-        #TODO(izabela): Replace the sleep with waiting for completion
         self.redirect('/admin')
 
 
