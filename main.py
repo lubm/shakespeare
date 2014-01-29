@@ -14,5 +14,5 @@ APP = webapp2.WSGIApplication([
     ('/admin', AdminPageController),
     ('/upload', UploadHandler),
     (r'/blobstore/(.*)', DownloadHandler),
-    ('/define', DefinePageController)
+    ('/define', DefinePageController),
 ], debug=True)

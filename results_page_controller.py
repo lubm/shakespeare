@@ -3,10 +3,12 @@
 import cgi
 import webapp2
 import time
+import logging
 
 from google.appengine.ext.webapp import template
 
 from models.word import Word
+from models.work import Work
 from auxiliary.html_formatter import HTMLFormatter
 from auxiliary.regex_formatter import RegexFormatter
 
@@ -23,22 +25,23 @@ class ResultsPageController(webapp2.RequestHandler):
         work_lines = {}
         if value:
             start = time.time()
-            word = Word.get_from_shakespeare_index(cgi.escape(value))
+            word = Word.get_by_id(cgi.escape(value))
             end = time.time()
             if word:
                 word_regex = RegexFormatter.get_any_case_word_regex(word.name)
-                work_lines = word.group_lines_by_work()
-                for work in work_lines:
-                    #TODO(luciana): Highlight on javascript
-                    work_lines[work] = map(
+                works = Work.query_works(word.key)
+                for work in works:
+                    # TODO(luciana): Highlight on javascript
+                    work_lines[work.title] = map(
                         lambda line: HTMLFormatter.apply_tag_to_pattern(
                             word_regex, 'b', line),
-                        work_lines[work])
+                        work.mentions)
+                    logging.info('---------------Mentions in work ' + str(work.mentions))
 
         template_values = {
             'searched_word': value,
             'work_mentions': work_lines,
-            #TODO(luciana): Create a separate function, change to list
+            # TODO(luciana): Create a separate function, change to list
             # comprehension
             'number_results': reduce(lambda x, y: x + len(y),
                 work_lines.values(), 0),
