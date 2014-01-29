@@ -1,3 +1,19 @@
+#!/usr/bin/env python
+#
+# Copyright 2011 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """ Handle the admin page, that allows to upload works.
 
 An index that permits the rapid and easy retrieval of the lines in which a given
@@ -7,9 +23,12 @@ structure:
 This way whhen the user query for a word the results can be shown grouped by
 work, giving a more pleasant view to the user.
 
+This module was developed based on the mapreduce hello-world example, which is
+available at
+https://developers.google.com/appengine/docs/python/dataprocessing/helloworld.
+
 """
 
-import time
 import datetime
 import urllib
 import logging
@@ -25,7 +44,6 @@ from mapreduce import base_handler
 from mapreduce import mapreduce_pipeline
 from models.word import Word
 from models.work import Work
-from resources.constants import ShakespeareConstants
 
 from google.appengine.ext import ndb
 
@@ -93,7 +111,7 @@ class FileMetadata(db.Model):
 
 class AdminPageController(webapp2.RequestHandler):
     """A controller to the admin page.
-    
+
     It handles the upload of works to the database. The map-reduce job is
     triggered on this page also."""
 
@@ -160,17 +178,17 @@ SEP = '++'
 
 def index_map(data):
     """Index map function.
-    
+
     Args:
         data: Refers to a line from the input files. Is actually composed of a
             tuple (lineinfo, line). This is the return value from the
             ZipLineInputReader, available in the input readers of mapreduce.
-    
-    Yields:
 
-        The map function can not return a tuple (word, title) as key, it needs to
-        return a string. So instead of returning a tuple, we return a string composed
-        of {word}SEP{title}. SEP is separator constant. 
+    Yields:
+        The map function must return a string, because that is what the reduce
+        function expects. So, in order to simulate the return of a tuple (word,
+        title), a string in the format {word}SEP{title} is returned. SEP is a
+        separator constant.
     """
     (info, line) = data
     title = info[1]
@@ -184,25 +202,20 @@ def index_reduce(key, values):
     Args:
         key: a string in the format {word}SEP{work}
         values: the lines in which {word} appears in {work}
-    
+
     """
     keys = key.split(SEP)
     word_value = keys[0]
     work_value = keys[1]
-    
     word = Word.get_by_id(word_value)
     if not word:
         word = Word(id=word_value, name=word_value)
-    
     work = Work(parent=word.key, id=work_value, title=work_value)
     work.mentions = []
-
     for line in values:
         work.mentions.append(line)
-    
     word.put()
     work.put()
-    
     yield '%s: %s\n' % (key, list(set(values)))
 
 
@@ -265,7 +278,6 @@ class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
         upload_files = self.get_uploads('file')
         blob_key = upload_files[0].key()
         name = self.request.get('name')
-        #TODO(izabela): handle empty string better
 
         user = users.get_current_user()
 
