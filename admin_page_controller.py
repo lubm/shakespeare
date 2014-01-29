@@ -119,14 +119,18 @@ def get_words(sentence):
     return set(sentence.split())
 
 
+def capitalize_as_title(title):
+    """Formats the sentence to be capitalized as title"""
+    return [' '.join(word[0].upper() + word[1:].lower() for word in
+        title.split())]
+
+
 def get_title(text):
     """Get title of work (first non-empty line)."""
     title = ''
     for line in text.split('\n'):
-        title = line.strip()
-        title = ' '.join(word[0].upper() + word[1:].lower()
-            for word in title.split())
-        if title:
+        if line.strip():
+            title = capitalize_as_title(line.strip())
             return title
 
 
