@@ -19,9 +19,9 @@ from google.appengine.api import users
 from google.appengine.ext.webapp import blobstore_handlers
 from mapreduce import base_handler
 from mapreduce import mapreduce_pipeline
-from models.mention import Mention
 from models.word import Word
-from resources.constants import ShakespeareConstants
+from models.word_mentions_in_work import WordMentionsInWork
+from resources.constants import Constants
 
 from google.appengine.ext import ndb
 
@@ -112,11 +112,11 @@ class AdminPageController(webapp2.RequestHandler):
         self.redirect("/admin")
 
 
-def split_into_words(sentence):
+def get_words(sentence):
     """Split a sentence into list of words."""
     sentence = re.sub(r"\W+", " ", sentence)
     sentence = re.sub(r"[_0-9]+", " ", sentence)
-    return sentence.split()
+    return set(sentence.split())
 
 
 def get_title(text):
@@ -136,20 +136,29 @@ def index_map(data):
     text = text_fn()
     title = get_title(text)
     for line in text.split('\n'):
-        for word in split_into_words(line.lower()):
+        for word in get_words(line.lower()):
             yield (word + '++' + title, line)
 
 
 def index_reduce(key, values):
     """Index reduce function."""
-    parent = ndb.Key(ShakespeareConstants.root_type,
-        ShakespeareConstants.root_key)
-    word = Word(parent=parent, id=key, name=key)
-    word.mentions = []
-    for value in values:
-        split_value = value.split('++')
-        word.mentions.append(Mention(work=split_value[0], line=split_value[1]))
+    keys = key.split('++')
+    word_id = keys[0]
+    work_id = keys[1]
+    
+    word = Word.get_by_id(word_id)
+    if not word:
+        word = Word(id=word_id, name=word_id)
+    
+    mentions_in_work = WordMentionsInWork(parent=word.key, id=work_id, 
+        title=work_id)
+    mentions_in_work.mentions = []
+
+    for line in values:
+        mentions_in_work.mentions.append(line)
+    
     word.put()
+    mentions_in_work.put()
     
     yield '%s: %s\n' % (key, list(set(values)))
 
@@ -244,3 +253,11 @@ class DownloadHandler(blobstore_handlers.BlobstoreDownloadHandler):
         logging.debug("key is %s", key)
         blob_info = blobstore.BlobInfo.get(key)
         self.send_blob(blob_info)
+
+class ClearDatastoreHandler(webapp2.RequestHandler):
+    """Handler to clear the datastore"""
+
+    def get(self):
+        """Clears the datastore."""
+        db.delete(db.Query(keys_only=True))
+        self.redirect('/admin')
