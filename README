@@ -16,3 +16,23 @@ The word search is ready and also the RPC call with Javascript. We don't have
 error handling for this yet.
 
 Extra: There is an easter egg in our home page :P
+
+
+
+
+How to run tests:
+
+We are using the nose-gae framework to run our tests 
+Url: https://code.google.com/p/nose-gae/
+
+This is one of the recomended framekorks in the AppEngine docs for local unit
+testing.
+
+For installing noseGAE:
+
+$ sudo easy_install nose
+$ sudo easy_install NoseGAE
+
+To run the tests, execute this in the app directory.
+
+$ nosetests --with-gae {test_file_name.py}
