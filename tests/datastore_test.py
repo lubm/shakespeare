@@ -1,11 +1,10 @@
 import unittest
 
-from google.appengine.api import memcache
 from google.appengine.ext import ndb
 from google.appengine.ext import testbed
 
 from models.word import Word
-from models.work import Work
+from models.word_mentions_in_work import WordMentionsInWork
 
 """
 Run this tests like this:
@@ -24,7 +23,7 @@ class DatastoreTest(unittest.TestCase):
         self.testbed.init_datastore_v3_stub()
 
         self.word = Word(id="borrower", name="borrower")
-        self.work = Work(parent=self.word.key, id="hamlet", title="hamlet")
+        self.work = WordMentionsInWork(parent=self.word.key, id="hamlet", title="hamlet")
         self.work.mentions = ['Neither a borrower nor a lender be']
 
         self.word_key = self.word.put()
@@ -55,7 +54,8 @@ class DatastoreTest(unittest.TestCase):
         retrieved_word = Word.get_by_id("borrower")  
         self.assertEqual(self.word.name, retrieved_word.name)
 
-        retrieved_works = Work.query_works(self.word.key).fetch()
+        query_works = WordMentionsInWork.query(ancestor=self.word.key)
+        retrieved_works = query_works.fetch()
         self.assertEqual(len(retrieved_works), 1)
         self.assertEqual(retrieved_works[0].mentions, 
             ['Neither a borrower nor a lender be'])
