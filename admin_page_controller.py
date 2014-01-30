@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#
+
 # Copyright 2011 Google Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -132,7 +132,7 @@ class AdminPageController(webapp2.RequestHandler):
         results_query = FileMetadata.all()
         results_query.ancestor(PARENT)
 
-        items = [result for result in results]
+        items = [result for result in results_query]
         indexed_items = []
         uploaded_items =[]
         for item in items:
