@@ -22,3 +22,28 @@ Extra: There is an easter egg in our home page :P
 
 Our interface expects a zip file consisting of one or multiple text files. The
 first non-empty line of each text file is regarded as the work's title.
+
+**************************      RUN TESTS     **************************
+
+We are using the nose-gae framework to run our tests 
+Url: https://code.google.com/p/nose-gae/
+
+This is one of the recomended framekorks in the AppEngine docs for local unit
+testing.
+
+For installing noseGAE:
+
+$ sudo easy_install nose
+$ sudo easy_install NoseGAE
+
+To run the tests, execute this in the app directory.
+
+$ nosetests --with-gae {test_file_name.py} 
+
+IMPORTANT: because of a known GAE issue 
+(https://code.google.com/p/nose-gae/issues/detail?id=60)
+the tests in the datastore_test.py file should be runned with this additional
+parameter --without-sandbox.
+
+
+

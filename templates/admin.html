@@ -1,74 +1,74 @@
 <html>
   <head>
-    <title>MapReduce Made Easy!</title>
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+    <title>Database Administration</title>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js">
+    </script>
     <script src="static/js/custom.js" type="text/javascript"></script>
-    <script src="static/js/disable_submition_of_empty_inputs.js" type="text/javascript"></script>
+    <script src="static/js/disable_submition_of_empty_inputs.js" 
+      type="text/javascript">
+    </script>
   </head>
-  <body bgcolor="#66ccff">
-    <div style="width:75%; background-color:#FFFFFF">
-      <h1>MapReduce in Three Simple Steps</h1>
-      <h2>Step 1: Choose your input file:</h2>
-      <div>{{ username }}'s files:</div>
-      <br />
-      {% if length %}
-      <table border=1>
+  <body>
+    <h2>Database Administration</h2>
+    <h3>Indexed Files</h3>
+    {% if indexed_length %}
+    <ul>
+      {% for item in indexed_items %}
+      <li>
+        {{ item.filename }}: <a href="{{ item.index_link }}">index</a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div>No files indexed yet!</div>
+    {% endif %}
+    <h3>Uploaded Files</h3>
+    {% if uploaded_length %}
+      <form id="index-form" action="/admin">
+        {% for item in uploaded_items %}
+        <div>
+          <input type="radio" onclick="updateForm('{{ item.key() }}', '{{
+            item.blobkey }}', '{{ item.filename }}');" name="uploaded_file"/> 
+          {{ item.filename }}
+        </div>
+        {% endfor %}
+        <input type="hidden" name="jobName" id="jobName" value=""/>
+        <input type="hidden" name="filekey" id="filekey" value=""/>
+        <input type="hidden" name="blobkey" id="blobkey" value=""/>
+        <input type="submit" name="index" id="index" value="Index"
+          disabled="disabled"/>
+        <span id="index-message" style="display: none;">
+          <b>The indexing job has started!</b> If you reload the page and the
+          processing is finished, a link for the index will appear in the
+          Indexed Files section.
+        </span>
+      </form>
+      
+    {% else %}
+    <div>No files uploaded and not indexed!</div>
+    {% endif %}
+    <h3>Upload New File</h3>
+    <form action="{{ upload_url }}" method="POST" enctype="multipart/form-data">
+      <table>
         <tr>
-          <td></td>
-          <td>name</td>
-          <td>uploaded on</td>
-          <td>source</td>
-          <td>index link</td>
+          <td>From your computer:</td>
+          <td><input type="file" name="file" id="file" /></td>
         </tr>
-        {% for item in items %}
         <tr>
-          <td><input type="radio" name='works' onclick="updateForm('{{ item.key() }}',
-            '{{ item.blobkey }}', '{{ item.filename }}');"></td>
-          <td><a href="/blobstore/{{ item.blobkey }}">{{ item.filename }}</a></td>
-          <td>{{ item.uploadedOn }}</td>
-          <td>{{ item.source }}</td>
-          <td>
-            {% if item.index_link %}
-            <a href="{{ item.index_link }}">index</a>
-            {% endif %}
+          <td>Give it a name:</td>
+          <td><input class="non-nulleable-input" type="textfield" id="name" 
+              name="name"/>
           </td>
         </tr>
-        {% endfor %}
       </table>
-      {% else %}
-      <div>No files uploaded yet!</div>
-      {% endif %}
-      <br />
-      <br />
-      <div>Upload some new data (should be a zip file containing as many text files as you like).</div>
-      <form action="{{ upload_url }}" method="POST" enctype="multipart/form-data">
-        <table>
-          <tr>
-            <td>From your computer:</td>
-            <td><input type='file' name='file' id='file' /></td>
-          </tr>
-          <tr>
-            <td>Give it a name:</td>
-            <td><input type='textfield' id="name" name='name' class='non-nulleable-input' /></td>
-          </tr>
-          <tr>
-            <td colspan=2 align="center"><input type='submit' class='disabled-when-input-is-null-button' name='submit' value='Upload'></td>
-          </tr>
-        </table>
-      </form>
-      <h2>Step 2: Run your MapReduce job:</h2>
-      <form action="/admin" method="post">
-        Input File: <label id="jobName">none selected</label>
-        <input type="hidden" name="filekey" id="filekey" value="">
-        <input type="hidden" name="blobkey" id="blobkey" value="">
-        <br />
-        <br />
-        <table>
-          <tr>
-            <td><input type="submit" id="index" name="index" value="Index" disabled="true"></td>
-          </tr>
-        </table>
-      </form>
-    </div>
+      <input class="disabled-when-input-is-null-button" type="submit" 
+        name="submit" value="Upload" onclick="displayUpdateLoading()"/>
+      <span id="update-loading" style="display: none;" >Loading...</span>  
+    </form>
+    <h3>Clear the Database</h3>
+    <form action="/clear">
+      <input type="submit" value="Clear" onclick="displayClearLoading()"/>
+      <span id="clear-loading" style="display: none;" >Loading...</span>  
+    </form>
   </body>
 </html>

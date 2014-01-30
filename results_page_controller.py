@@ -3,14 +3,65 @@
 import cgi
 import webapp2
 import time
-import logging
 
 from google.appengine.ext.webapp import template
 
 from models.word import Word
-from models.work import Work
+from models.word_mentions_in_work import WordMentionsInWork
 from auxiliary.html_formatter import HTMLFormatter
 from auxiliary.regex_formatter import RegexFormatter
+from resources.constants import Constants
+
+def bold_mentions(word_name, mentions):
+    """Turns into bold certain word in textual mentions.
+
+    Args:
+        word_name: the word string representation.
+        mentions: the list of line strings in which the word appear.
+
+    Returns:
+        The list of mentions with the word names within bold HTML tags.
+    """
+    
+    word_regex = RegexFormatter.get_any_case_word_regex(word_name)
+    return [
+        HTMLFormatter.apply_tag_to_pattern(word_regex, Constants.BOLD_TAG,
+            line) for line in mentions]
+
+
+def count_dict_values(dictionary):
+    """Counts the amount of values regarding all keys in a dictionary.
+
+    Args:
+        dictionary: a dictionary to count the values.
+
+    Returns:
+        An integer with the amount of values.
+    """
+    count = 0
+    for key in dictionary:
+        count += len(dictionary[key])
+    return count
+
+
+def get_work_mentions_of_word_name(word_name):
+    """Get all the mentions of a certain word string representation grouped by
+       work.
+
+    Args:
+        word_name: the string representation of the word.
+
+    Returns:
+        A dictionary with work titles as keys and lines with mentions of the
+        word as values.
+    """
+    work_mentions = {}
+    word = Word.get_by_id(word_name)
+    if word:
+        works = WordMentionsInWork.query(ancestor=word.key)
+        for work in works:
+            work_mentions[work.title] = bold_mentions(word.name, work.mentions)
+    return work_mentions
 
 
 class ResultsPageController(webapp2.RequestHandler):
@@ -21,30 +72,15 @@ class ResultsPageController(webapp2.RequestHandler):
         searched_value = self.request.get('searched_word')
         value = searched_value.lower() if searched_value else ''
 
-        # TODO(luciana): Refactor into shorter functions
-        work_lines = {}
         if value:
             start = time.time()
-            word = Word.get_by_id(cgi.escape(value))
+            work_mentions = get_work_mentions_of_word_name(cgi.escape(value))
             end = time.time()
-            if word:
-                word_regex = RegexFormatter.get_any_case_word_regex(word.name)
-                works = Work.query_works(word.key)
-                for work in works:
-                    # TODO(luciana): Highlight on javascript
-                    work_lines[work.title] = map(
-                        lambda line: HTMLFormatter.apply_tag_to_pattern(
-                            word_regex, 'b', line),
-                        work.mentions)
-                    logging.info('---------------Mentions in work ' + str(work.mentions))
 
         template_values = {
             'searched_word': value,
-            'work_mentions': work_lines,
-            # TODO(luciana): Create a separate function, change to list
-            # comprehension
-            'number_results': reduce(lambda x, y: x + len(y),
-                work_lines.values(), 0),
+            'work_mentions': work_mentions,
+            'number_results': count_dict_values(work_mentions),
             'time': round(end - start, 4)
         }
 

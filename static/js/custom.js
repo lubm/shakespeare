@@ -22,14 +22,44 @@
  * @param {string} filename The name that the user has chosen to give this input
  *     file upon uploading it.
  */
-
 function updateForm(filekey, blobkey, filename) {
-  console.log(filekey);
-  console.log(blobkey);
-  console.log(filename);
-  $('#jobName').text(filename);
-  $('#filekey').val(filekey);
-  $('#blobkey').val(blobkey);
-  $('#index').attr("disabled", false);
+<<<<<<< HEAD
+    /* Updates the form to contain the information regarding a radio button
+     * selected. It is used to send the information regarding the file selected
+     * to be */
+    $('#jobName').val(filename);
+    $('#filekey').val(filekey);
+    $('#blobkey').val(blobkey);
+    $('#index').attr("disabled", false);
 }
 
+$(document).ready(function(){
+    $("#index-form").submit(function(event) {
+        event.preventDefault();
+
+        data = {
+            'filename': $('#jobName').val(), 
+            'filekey': $('#filekey').val(),
+            'blobkey': $('#blobkey').val()
+        };
+
+        $.post(
+            '/admin',
+            data,
+            function() {
+                $("#index-message").css("display", "inline");
+            },
+            "json"
+        ).always(function() {
+            $("#index-message").css("display", "inline");
+        });
+    });
+});
+
+function displayClearLoading() {
+    $('#clear-loading').css('display', 'inline');
+}
+
+function displayUpdateLoading() {
+    $('#update-loading').css('display', 'inline');
+}

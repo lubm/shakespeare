@@ -36,14 +36,21 @@ import jinja2
 import re
 import webapp2
 
+# In order to allow the third party modules to be visible within themselves, it
+# is required to add the third party path to sys.path
+from third_party import add_third_party_path
+add_third_party_path()
+
 from google.appengine.ext import blobstore
 from google.appengine.ext import db
 from google.appengine.api import users
 from google.appengine.ext.webapp import blobstore_handlers
-from mapreduce import base_handler
-from mapreduce import mapreduce_pipeline
+from third_party.mapreduce import base_handler
+from third_party.mapreduce import mapreduce_pipeline
 from models.word import Word
-from models.work import Work
+from models.word_mentions_in_work import WordMentionsInWork
+from resources.constants import Constants
+
 
 from google.appengine.ext import ndb
 
@@ -125,35 +132,37 @@ class AdminPageController(webapp2.RequestHandler):
         results_query = FileMetadata.all()
         results_query.ancestor(PARENT)
 
-        items = [result for result in results_query.run()]
-        length = len(items)
+        items = [result for result in results]
+        indexed_items = []
+        uploaded_items =[]
+        for item in items:
+            if item.index_link:
+                indexed_items.append(item)
+            else:
+                uploaded_items.append(item)
+        indexed_length = len(indexed_items)
+        uploaded_length = len(uploaded_items)
 
         upload_url = blobstore.create_upload_url('/upload')
 
         self.response.out.write(self.template_env.get_template(
-            'admin.html').render(
-                {'username': 'admin',
-                  'items': items,
-                  'length': length,
-                  'upload_url': upload_url}))
+            "admin.html").render(
+                {"username": 'admin',
+                  "indexed_items": indexed_items,
+                  "uploaded_items": uploaded_items,
+                  "indexed_length": indexed_length,
+                  "uploaded_length": uploaded_length,
+                  "upload_url": upload_url}))
 
     def post(self):
         """Start map reduce job on selected file."""
-        #clear_database()
-
-        filekey = self.request.get('filekey')
-        blob_key = self.request.get('blobkey')
+        filekey = self.request.get("filekey")
+        blob_key = self.request.get("blobkey")
 
         pipeline = IndexPipeline(filekey, blob_key)
 
         pipeline.start()
         #TODO(Caro): put a loading icon in the index link
-        self.redirect('/admin')
-
-
-def clear_database():
-    """Clears the database for the new loading."""
-    db.delete(db.Query(keys_only=True))
 
 
 def get_words(line):
@@ -163,14 +172,18 @@ def get_words(line):
     return set(line.split())
 
 
+def capitalize_as_title(title):
+    """Formats the sentence to be capitalized as title"""
+    return ' '.join(word[0].upper() + word[1:].lower() for word in
+        title.split())
+
+
 def get_title(text):
     """Get title of work (first non-empty line)."""
     title = ''
     for line in text.split('\n'):
-        title = line.strip()
-        title = ' '.join(word[0].upper() + word[1:].lower()
-            for word in title.split())
-        if title:
+        if line.strip():
+            title = capitalize_as_title(line.strip())
             return title
 
 
@@ -213,12 +226,16 @@ def index_reduce(key, values):
     word = Word.get_by_id(word_value)
     if not word:
         word = Word(id=word_value, name=word_value)
-    work = Work(parent=word.key, id=work_value, title=work_value)
-    work.mentions = []
+    
+    mentions_in_work = WordMentionsInWork(parent=word.key, id=work_value, 
+        title=work_value)
+    mentions_in_work.mentions = []
+
     for line in values:
-        work.mentions.append(line)
+        mentions_in_work.mentions.append(line)
+    
     word.put()
-    work.put()
+    mentions_in_work.put()
     yield '%s: %s\n' % (key, list(set(values)))
 
 
@@ -310,3 +327,11 @@ class DownloadHandler(blobstore_handlers.BlobstoreDownloadHandler):
         logging.debug('key is %s', key)
         blob_info = blobstore.BlobInfo.get(key)
         self.send_blob(blob_info)
+
+class ClearDatastoreHandler(webapp2.RequestHandler):
+    """Handler to clear the datastore"""
+
+    def get(self):
+        """Clears the datastore."""
+        db.delete(db.Query(keys_only=True))
+        self.redirect('/admin')
