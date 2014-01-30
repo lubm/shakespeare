@@ -22,28 +22,43 @@
  * @param {string} filename The name that the user has chosen to give this input
  *     file upon uploading it.
  */
-function updateForm(button, filekey, blobkey, filename) {
-    //document.getElementById('jobName').innerText = filename;
-    //document.getElementById('filekey').value = filekey;
-    //document.getElementById('blobkey').value = blobkey;
-    button.disabled = "disabled";
-
-    data = {'filename': filename, 'filekey': filekey, 'blobkey': blobkey};
-
-    $.ajax({
-        url: '/admin',
-        type: 'POST',
-        data: data,
-        dataType: 'json',
-        success: function(data, status) {
-            alert('finished');
-        }
-    });
-
-    //$('#jobName').text(filename);
-    //$('#filekey').val(filekey);
-    //$('#blobkey').val(blobkey);
-
-    //$('#index').removeAttr('disabled');
+function updateForm(filekey, blobkey, filename) {
+    /* Updates the form to contain the information regarding a radio button
+     * selected. It is used to send the information regarding the file selected
+     * to be */
+    $('#jobName').val(filename);
+    $('#filekey').val(filekey);
+    $('#blobkey').val(blobkey);
+    $('#index').attr("disabled", false);
 }
 
+$(document).ready(function(){
+    $("#index-form").submit(function(event) {
+        event.preventDefault();
+
+        data = {
+            'filename': $('#jobName').val(), 
+            'filekey': $('#filekey').val(),
+            'blobkey': $('#blobkey').val()
+        };
+
+        $.post(
+            '/admin',
+            data,
+            function() {
+                $("#index-message").css("display", "inline");
+            },
+            "json"
+        ).always(function() {
+            $("#index-message").css("display", "inline");
+        });
+    });
+});
+
+function displayClearLoading() {
+    $('#clear-loading').css('display', 'inline');
+}
+
+function displayUpdateLoading() {
+    $('#update-loading').css('display', 'inline');
+}
