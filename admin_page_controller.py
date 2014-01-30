@@ -192,6 +192,9 @@ def index_map(data):
     """
     (info, line) = data
     title = info[1]
+    logging.info('LINE: %s', line)
+    logging.info('start_file_index: %d', info[2])
+    logging.info('start_position: %d', info[3])
     for word in get_words(line.lower()):
         yield (word + SEP + title, line)
 
