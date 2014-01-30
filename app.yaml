@@ -28,5 +28,5 @@ libraries:
   version: "2.6"
 
 includes:
-- mapreduce/include.yaml
+- third_party/mapreduce/include.yaml
 
