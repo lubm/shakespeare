@@ -249,8 +249,8 @@ class IndexPipeline(base_handler.PipelineBase):
         """Run the pipeline of the mapreduce job."""
         output = yield mapreduce_pipeline.MapreducePipeline(
                 'index',
-                'admin_page_controller.index_map',
-                'admin_page_controller.index_reduce',
+                'controllers.admin_page.index_map',
+                'controllers.admin_page.index_reduce',
                 'mapreduce.input_readers.BlobstoreZipLineInputReader',
                 'mapreduce.output_writers.BlobstoreOutputWriter',
                 mapper_params={
