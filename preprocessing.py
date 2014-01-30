@@ -1,5 +1,6 @@
 """ TODO(izabela): module docstring """
 
+from google.appengine.ext import blobstore
 import zipfile
 import re
 import sys
@@ -51,14 +52,15 @@ class Preprocessing(object):
         self.pos_to_character_dicts.append(pos_to_char)
 
 
-    def run(self, file_path):
+    #def run(self, file_path):
+    def run(self, blob_key):
         """Open a zipfile and preprocess each of its text files.
 
         Args:
-            file_path: The path to a zip file consisting os text files.
         
         """
-        with zipfile.ZipFile(file_path, 'r') as zip_files:
+        blob_reader = blobstore.BlobReader(blob_key)
+        with zipfile.ZipFile(blob_reader) as zip_files:
             for count, name in enumerate(zip_files.namelist()):
                 with zip_files.open(name, 'r') as my_file:
                     title = self.get_title(my_file)
@@ -66,8 +68,8 @@ class Preprocessing(object):
                     self.parse_file(my_file, title)
 
 
-p = Preprocessing()
-p.run('static/text.zip')
-print p.ind_to_title
-print p.pos_to_character_dicts
+#p = Preprocessing()
+#p.run('static/text.zip')
+#print p.ind_to_title
+#print p.pos_to_character_dicts
     
