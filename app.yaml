@@ -13,15 +13,15 @@ handlers:
   login: admin
 
 - url: /admin
-  script: main.APP
+  script: controllers.main.APP
   login: admin
 
 - url: /blobstore/.*
-  script: main.APP
+  script: controllers.main.APP
   login: admin
 
 - url: /.*
-  script: main.APP
+  script: controllers.main.APP
 
 libraries:
 - name: jinja2

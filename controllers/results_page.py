@@ -85,5 +85,5 @@ class ResultsPageController(webapp2.RequestHandler):
         }
 
         self.response.headers['Content-Type'] = 'text/html'
-        self.response.out.write(template.render('templates/index.html',
+        self.response.out.write(template.render('templates/results.html',
             template_values))
