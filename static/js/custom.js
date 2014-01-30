@@ -23,6 +23,7 @@
  *     file upon uploading it.
  */
 function updateForm(filekey, blobkey, filename) {
+<<<<<<< HEAD
     /* Updates the form to contain the information regarding a radio button
      * selected. It is used to send the information regarding the file selected
      * to be */
