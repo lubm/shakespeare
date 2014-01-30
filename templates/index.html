@@ -46,16 +46,18 @@
       </div>
 
   	<div class="col-md-8 ">
-          <div>
+          <div id="results">
           {% if work_mentions %}
-              {% for work, lines in work_mentions.items %}
+            {% for work, lines in work_mentions.items %}
+              <div class="result-item">
                 <div class="title text-danger">{{ work }}</div>
                 <i>
-                {% for line in lines %}
-                  <p class="line">{{ line|safe }}</p>
-                {% endfor %}
+                  {% for line in lines %}
+                    <p class="result-line">{{ line|safe }}</p>
+                  {% endfor %}
                 </i>
-              {% endfor %}
+              </div>
+            {% endfor %}
           {% else %}
             <p>No results found for <i>{{ searched_word }}</i> </p>
           {% endif %}
