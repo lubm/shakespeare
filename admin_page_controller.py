@@ -209,10 +209,10 @@ def index_reduce(key, values):
     work_value = keys[1]
     word = Word.get_by_id(word_value)
     if not word:
-        word = Word(id=word_id, name=word_id)
+        word = Word(id=word_value, name=word_value)
     
-    mentions_in_work = WordMentionsInWork(parent=word.key, id=work_id, 
-        title=work_id)
+    mentions_in_work = WordMentionsInWork(parent=word.key, id=work_value, 
+        title=work_value)
     mentions_in_work.mentions = []
 
     for line in values:
