@@ -89,15 +89,25 @@ class AdminPageController(webapp2.RequestHandler):
         results = FileMetadata.all()
 
         items = [result for result in results]
-        length = len(items)
+        indexed_items = []
+        uploaded_items =[]
+        for item in items:
+            if item.index_link:
+                indexed_items.append(item)
+            else:
+                uploaded_items.append(item)
+        indexed_length = len(indexed_items)
+        uploaded_length = len(uploaded_items)
 
         upload_url = blobstore.create_upload_url('/upload')
 
         self.response.out.write(self.template_env.get_template(
             "admin.html").render(
                 {"username": 'admin',
-                  "items": items,
-                  "length": length,
+                  "indexed_items": indexed_items,
+                  "uploaded_items": uploaded_items,
+                  "indexed_length": indexed_length,
+                  "uploaded_length": uploaded_length,
                   "upload_url": upload_url}))
 
     def post(self):
@@ -109,7 +119,8 @@ class AdminPageController(webapp2.RequestHandler):
 
         pipeline.start()
         #TODO(Caro): put a loading icon in the index link
-        self.redirect("/admin")
+        #self.redirect("/admin")
+        self.response.out.write("hello")
 
 
 def get_words(sentence):
@@ -121,8 +132,8 @@ def get_words(sentence):
 
 def capitalize_as_title(title):
     """Formats the sentence to be capitalized as title"""
-    return [' '.join(word[0].upper() + word[1:].lower() for word in
-        title.split())]
+    return ' '.join(word[0].upper() + word[1:].lower() for word in
+        title.split())
 
 
 def get_title(text):
