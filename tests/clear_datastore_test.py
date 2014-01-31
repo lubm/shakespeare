@@ -1,6 +1,7 @@
 import unittest
 import webtest
 import webapp2
+import logging
 
 from google.appengine.ext import ndb
 from google.appengine.ext import testbed
@@ -33,20 +34,20 @@ class DatastoreTest(unittest.TestCase):
 
         self.objects = []
 
-        self.objects.append(Word(id="borrower", name="borrower"))
-        work = WordMentionsInWork(parent=self.objects[0].key, id="hamlet", 
-            title="hamlet")
+        self.objects.append(Word(id='borrower', name='borrower'))
+        work = WordMentionsInWork(parent=self.objects[0].key, id='hamlet', 
+            title='hamlet')
         work.mentions = ['Neither a borrower nor a lender be']
         self.objects.append(work)
 
-        self.objects.append(Word(id="neither", name="neither"))
-        work = WordMentionsInWork(parent=self.objects[2].key, id="hamlet", 
-            title="hamlet")
+        self.objects.append(Word(id='neither', name='neither'))
+        work = WordMentionsInWork(parent=self.objects[2].key, id='hamlet', 
+            title='hamlet')
         work.mentions = ['Neither a borrower nor a lender be']
         self.objects.append(work)
 
-        self.objects.append(FileMetadata(filename="dummy"))
-        self.objects.append(FileMetadata(filename="dummy2"))
+        self.objects.append(FileMetadata(filename='dummy'))
+        self.objects.append(FileMetadata(filename='dummy2'))
 
         self.keys = []
         for obj in self.objects:
@@ -68,12 +69,16 @@ class DatastoreTest(unittest.TestCase):
 
     def test_clear_datastore(self):
         """Clears the whole database, i.e., all the datastore entities"""
-        
-        response = self.tesapp.get('/')
+
+        self.assertNotEqual(Word.query().fetch(), [])
+        self.assertNotEqual(WordMentionsInWork.query().fetch(), [])
+        self.assertNotEqual(list(FileMetadata.all().run()), [])
+        response = self.testapp.get('/')
         self.assertEqual(Word.query().fetch(), [])
         self.assertEqual(WordMentionsInWork.query().fetch(), [])
-        self.assertEqual(FileMetadata.query().fetch(), [])
+        self.assertEqual(list(FileMetadata.all().run()), [])
 
+import sys
 
 if __name__ == '__main__':
     unittest.main()
