@@ -1,4 +1,6 @@
 import unittest
+import webtest
+import webapp2
 
 from google.appengine.ext import ndb
 from google.appengine.ext import testbed
@@ -32,40 +34,42 @@ class DatastoreTest(unittest.TestCase):
         self.objects = []
 
         self.objects.append(Word(id="borrower", name="borrower"))
-        work = WordMentionsInWork(parent=self.words[0].key, id="hamlet", 
+        work = WordMentionsInWork(parent=self.objects[0].key, id="hamlet", 
             title="hamlet")
         work.mentions = ['Neither a borrower nor a lender be']
         self.objects.append(work)
 
         self.objects.append(Word(id="neither", name="neither"))
-        work = WordMentionsInWork(parent=self.words[1].key, id="hamlet", 
+        work = WordMentionsInWork(parent=self.objects[2].key, id="hamlet", 
             title="hamlet")
         work.mentions = ['Neither a borrower nor a lender be']
-        self.works.append(work)
+        self.objects.append(work)
 
         self.objects.append(FileMetadata(filename="dummy"))
         self.objects.append(FileMetadata(filename="dummy2"))
 
         self.keys = []
-        for obj in objects:
+        for obj in self.objects:
             self.keys.append(obj.put())
 
+        """ Setting up the environment of the handler """
+        app = webapp2.WSGIApplication([('/', ClearDatastoreHandler)])
+        self.testapp = webtest.TestApp(app)
 
     def tearDown(self):
         """Deactivate the testbed. 
         This restores the original stubs so that tests do not interfere with 
         each other."""
 
-        for obj in objects:
-            if obj:
-                obj.delete()
+        #for key in self.keys:
+            #key.delete()
 
         self.testbed.deactivate()
 
     def test_clear_datastore(self):
         """Clears the whole database, i.e., all the datastore entities"""
-        handler = ClearDatastoreHandler()
-        handler.get()
+        
+        response = self.tesapp.get('/')
         self.assertEqual(Word.query().fetch(), [])
         self.assertEqual(WordMentionsInWork.query().fetch(), [])
         self.assertEqual(FileMetadata.query().fetch(), [])
