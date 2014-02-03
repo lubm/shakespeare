@@ -4,8 +4,6 @@ import cgi
 import webapp2
 import time
 
-from google.appengine.ext.webapp import template
-
 from models.word import Word
 from models.word_mentions_in_work import WordMentionsInWork
 from auxiliary.html_formatter import HTMLFormatter
@@ -85,5 +83,5 @@ class ResultsPageController(webapp2.RequestHandler):
         }
 
         self.response.headers['Content-Type'] = 'text/html'
-        self.response.out.write(template.render('templates/results.html',
-            template_values))
+        template = Constants.JINJA_ENVIRONMENT.get_template('results.html')
+        self.response.write(template.render(template_values))
