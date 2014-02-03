@@ -16,7 +16,7 @@ class DefinePageController(webapp2.RequestHandler):
         """Obtains the definion of the searched word.
 
         Gets the searched word from the request and calls the DefinitionService
-        in order to obtain its definion. 
+        in order to obtain its definion.
 
         Returns:
             The first definition of the word if it is found in the dictionary or
