@@ -22,9 +22,10 @@ handlers:
 - url: /blobstore/.*
   script: controllers.main.APP
   login: admin
-
+  
 - url: /.*
   script: controllers.main.APP
+
 
 libraries:
 - name: jinja2

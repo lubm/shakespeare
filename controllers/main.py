@@ -9,6 +9,7 @@ from controllers.home_page import HomePageController
 from controllers.results_page import ResultsPageController
 from controllers.define_page import DefinePageController
 
+
 APP = webapp2.WSGIApplication([
     ('/', HomePageController),
     ('/search', ResultsPageController),
