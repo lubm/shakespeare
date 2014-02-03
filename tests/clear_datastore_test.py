@@ -1,47 +1,42 @@
+"""Test the handler that clears the datastore.
+
+   Follow these steps to run this module:
+   nosetests --with-gae --without-sandbox tests/clear_datastore_test.py
+   Known GAE issue: https://code.google.com/p/nose-gae/issues/detail?id=60
+"""
+
 import unittest
 import webtest
 import webapp2
-import logging
 
-from google.appengine.ext import ndb
 from google.appengine.ext import testbed
 
 from models.word import Word
 from models.word_mentions_in_work import WordMentionsInWork
 from controllers.admin_page import FileMetadata
-
 from controllers.admin_page import ClearDatastoreHandler
 
-"""
-Run this tests like this:
-nosetests --with-gae --without-sandbox tests/datastore_test.py
-Known GAE issue: https://code.google.com/p/nose-gae/issues/detail?id=60
-"""
+class ClearDatastoreTest(unittest.TestCase):
+    """Unit test for the action of clearing the datastore."""
 
-class DatastoreTest(unittest.TestCase):
-    def setUp(self):
-        """ Creates an instance of Testbed class and initializes it with the 
-        datastore stub.
-
-        Also creates the entities and stores them in the database. All kinds of
-        entities inserted in the datastore during the life span of the
-        application are included.
-        """
-        
+    def _set_up_test_datastore(self):
+        """Initializes the testbed to allow the creation of a datastore stub."""
         self.testbed = testbed.Testbed()
         self.testbed.activate()
         self.testbed.init_datastore_v3_stub()
 
+    def _insert_into_datastore(self):
+        """Insert test objects into the datastore."""
         self.objects = []
 
         self.objects.append(Word(id='borrower', name='borrower'))
-        work = WordMentionsInWork(parent=self.objects[0].key, id='hamlet', 
+        work = WordMentionsInWork(parent=self.objects[0].key, id='hamlet',
             title='hamlet')
         work.mentions = ['Neither a borrower nor a lender be']
         self.objects.append(work)
 
         self.objects.append(Word(id='neither', name='neither'))
-        work = WordMentionsInWork(parent=self.objects[2].key, id='hamlet', 
+        work = WordMentionsInWork(parent=self.objects[2].key, id='hamlet',
             title='hamlet')
         work.mentions = ['Neither a borrower nor a lender be']
         self.objects.append(work)
@@ -53,32 +48,41 @@ class DatastoreTest(unittest.TestCase):
         for obj in self.objects:
             self.keys.append(obj.put())
 
-        """ Setting up the environment of the handler """
+    def _set_up_test_application(self):
+        """Sets up the environment for calling the handler."""
         app = webapp2.WSGIApplication([('/', ClearDatastoreHandler)])
         self.testapp = webtest.TestApp(app)
 
-    def tearDown(self):
-        """Deactivate the testbed. 
-        This restores the original stubs so that tests do not interfere with 
-        each other."""
+    def setUp(self):
+        """Sets up the datastore and application environment for the test and
+           inserts dummy objects into the database.
+        """
+        self._set_up_test_datastore()
+        self._insert_into_datastore()
+        self._set_up_test_application()
 
-        #for key in self.keys:
-            #key.delete()
+    def tearDown(self):
+        """Deactivates the testbed.
+        This restores the original stubs so that tests do not interfere with
+        each other.
+        """
 
         self.testbed.deactivate()
 
     def test_clear_datastore(self):
-        """Clears the whole database, i.e., all the datastore entities"""
+        """Tests if the database is being cleared and considers non-empty lists
+           of instances for all the models used by the application.
+        """
 
-        self.assertNotEqual(Word.query().fetch(), [])
-        self.assertNotEqual(WordMentionsInWork.query().fetch(), [])
-        self.assertNotEqual(list(FileMetadata.all().run()), [])
-        response = self.testapp.get('/')
-        self.assertEqual(Word.query().fetch(), [])
-        self.assertEqual(WordMentionsInWork.query().fetch(), [])
-        self.assertEqual(list(FileMetadata.all().run()), [])
+        self.assertNotEquals(Word.query().fetch(), [])
+        self.assertNotEquals(WordMentionsInWork.query().fetch(), [])
+        self.assertNotEquals(list(FileMetadata.all().run()), [])
 
-import sys
+        self.testapp.get('/')
+
+        self.assertEquals(Word.query().fetch(), [])
+        self.assertEquals(WordMentionsInWork.query().fetch(), [])
+        self.assertEquals(list(FileMetadata.all().run()), [])
 
 if __name__ == '__main__':
     unittest.main()
