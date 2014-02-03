@@ -45,12 +45,12 @@ from google.appengine.ext import blobstore
 from google.appengine.ext import db
 from google.appengine.api import users
 from google.appengine.ext.webapp import blobstore_handlers
-from third_party.mapreduce import base_handler
-from third_party.mapreduce import mapreduce_pipeline
 from models.word import Word
 from models.word_mentions_in_work import WordMentionsInWork
+from preprocessing import Preprocessing
 from resources.constants import Constants
-
+from third_party.mapreduce import base_handler
+from third_party.mapreduce import mapreduce_pipeline
 
 from google.appengine.ext import ndb
 
@@ -159,6 +159,7 @@ class AdminPageController(webapp2.RequestHandler):
         filekey = self.request.get("filekey")
         blob_key = self.request.get("blobkey")
 
+        preprocessing = Preprocessing(blob_key)
         pipeline = IndexPipeline(filekey, blob_key)
 
         pipeline.start()
@@ -241,6 +242,7 @@ def index_reduce(key, values):
 
 class IndexPipeline(base_handler.PipelineBase):
     """A pipeline to run Index demo.
+from third_party.mapreduce import mapreduce_pipeline
 
     Args:
         blobkey: blobkey to process as string. Should be a zip archive with
