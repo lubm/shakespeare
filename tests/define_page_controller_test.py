@@ -3,11 +3,11 @@ from controllers.define_page import DefinePageController
 import unittest
 import  webapp2
 
-"""
-Run this tests like this:
-nosetests --with-gae tests/define_page_controller_test.py
-"""
+"""Run this tests like this:
+nosetests --with-gae tests/define_page_controller_test.py """
 
+# Disable Too many public methods warning
+# pylint: disable=R0904
 class DefinePageControllerTest(unittest.TestCase):
     """Tests for the handler of the definition service"""
 
