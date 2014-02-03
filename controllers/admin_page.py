@@ -66,7 +66,7 @@ class Parent(db.Model):
     pass
 
 
-PARENT = Parent(key_name='parent')
+_PARENT = Parent(key_name='parent')
 
 
 class FileMetadata(db.Model):
@@ -115,6 +115,7 @@ class FileMetadata(db.Model):
         sep = FileMetadata.__SEP
         return str(username + sep + str(date) + sep + blob_key)
 
+_preprocessing = null
 
 class AdminPageController(webapp2.RequestHandler):
     """A controller to the admin page.
@@ -130,7 +131,7 @@ class AdminPageController(webapp2.RequestHandler):
         """Displays current zip files in the database mapreduce results."""
 
         results_query = FileMetadata.all()
-        results_query.ancestor(PARENT)
+        results_query.ancestor(_PARENT)
 
         items = [result for result in results_query]
         indexed_items = []
@@ -159,7 +160,7 @@ class AdminPageController(webapp2.RequestHandler):
         filekey = self.request.get("filekey")
         blob_key = self.request.get("blobkey")
 
-        preprocessing = Preprocessing(blob_key)
+        _preprocessing = Preprocessing(blob_key)
         pipeline = IndexPipeline(filekey, blob_key)
 
         pipeline.start()
@@ -188,7 +189,7 @@ def get_title(text):
             return title
 
 
-SEP = '++'
+_SEP = '++'
 
 def index_map(data):
     """Index map function.
@@ -201,7 +202,7 @@ def index_map(data):
     Yields:
         The map function must return a string, because that is what the reduce
         function expects. So, in order to simulate the return of a tuple (word,
-        title), a string in the format {word}SEP{title} is returned. SEP is a
+        title), a string in the format {word}_SEP{title} is returned. SEP is a
         separator constant.
     """
     (info, line) = data
@@ -210,18 +211,18 @@ def index_map(data):
     logging.info('start_file_index: %d', info[2])
     logging.info('start_position: %d', info[3])
     for word in get_words(line.lower()):
-        yield (word + SEP + title, line)
+        yield (word + _SEP + title, line)
 
 
 def index_reduce(key, values):
     """Index reduce function.
 
     Args:
-        key: a string in the format {word}SEP{work}
+        key: a string in the format {word}_SEP{work}
         values: the lines in which {word} appears in {work}
 
     """
-    keys = key.split(SEP)
+    keys = key.split(_SEP)
     word_value = keys[0]
     work_value = keys[1]
     word = Word.get_by_id(word_value)
@@ -309,7 +310,7 @@ class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
         key = FileMetadata.get_key_name(username, date, str_blob_key)
 
         ctx = ndb.get_context()
-        meta = FileMetadata(key_name=key, parent=PARENT)
+        meta = FileMetadata(key_name=key, parent=_PARENT)
         meta.owner = user
         meta.filename = name
         meta.uploaded_on = date
