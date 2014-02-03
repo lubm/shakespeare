@@ -52,7 +52,6 @@ class Preprocessing(object):
         self.pos_to_character_dicts.append(pos_to_char)
 
 
-    #def run(self, file_path):
     def run(self, blob_key):
         """Open a zipfile and preprocess each of its text files.
 
@@ -67,9 +66,3 @@ class Preprocessing(object):
                     self.ind_to_title[count] = self.titlecase(title)
                     self.parse_file(my_file, title)
 
-
-#p = Preprocessing()
-#p.run('static/text.zip')
-#print p.ind_to_title
-#print p.pos_to_character_dicts
-    
