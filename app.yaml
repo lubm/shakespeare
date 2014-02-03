@@ -8,20 +8,23 @@ handlers:
 - url: /static
   static_dir: static
 
+- url: /third_party/js
+  static_dir: third_party/js
+
 - url: /mapreduce(/.*)?
   script: mapreduce.main.APP
   login: admin
 
 - url: /admin
-  script: main.APP
+  script: controllers.main.APP
   login: admin
 
 - url: /blobstore/.*
-  script: main.APP
+  script: controllers.main.APP
   login: admin
 
 - url: /.*
-  script: main.APP
+  script: controllers.main.APP
 
 libraries:
 - name: jinja2
