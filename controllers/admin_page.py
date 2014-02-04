@@ -47,7 +47,7 @@ from google.appengine.api import users
 from google.appengine.ext.webapp import blobstore_handlers
 from models.word import Word
 from models.word_mentions_in_work import WordMentionsInWork
-from preprocessing import Preprocessing
+from auxiliary.preprocessing import Preprocessing
 from resources.constants import Constants
 from third_party.mapreduce import base_handler
 from third_party.mapreduce import mapreduce_pipeline
