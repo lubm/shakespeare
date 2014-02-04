@@ -43,17 +43,17 @@ add_third_party_path()
 
 from google.appengine.ext import blobstore
 from google.appengine.ext import db
+from google.appengine.ext import ndb
 from google.appengine.api import users
 from google.appengine.ext.webapp import blobstore_handlers
+
+from models.character import Character
 from models.word import Word
-from models.word_mentions_in_work import WordMentionsInWork
+from models.work import Work
 from preprocessing import Preprocessing
 from resources.constants import Constants
 from third_party.mapreduce import base_handler
 from third_party.mapreduce import mapreduce_pipeline
-
-from google.appengine.ext import ndb
-
 
 class Parent(db.Model):
     """ A dumb parent class.
@@ -160,10 +160,15 @@ class AdminPageController(webapp2.RequestHandler):
 
     def post(self):
         """Start map reduce job on selected file."""
+        import os
         filekey = self.request.get("filekey")
         blob_key = self.request.get("blobkey")
 
         _preprocessing = Preprocessing(blob_key)
+
+        print os.environ.get('PYTHONPATH')
+        print '******************'
+
         pipeline = IndexPipeline(filekey, blob_key)
 
         pipeline.start()
@@ -176,11 +181,6 @@ def get_words(line):
     line = re.sub(r'[_0-9]+', ' ', line)
     return set(line.split())
 
-
-def capitalize_as_title(title):
-    """Formats the sentence to be capitalized as title"""
-    return ' '.join(word[0].upper() + word[1:].lower() for word in
-        title.split())
 
 _SEP = '++'
 
@@ -198,13 +198,16 @@ def index_map(data):
         title), a string in the format {word}_SEP{title} is returned. SEP is a
         separator constant.
     """
-    (info, line) = data
-    title = info[1]
+    info, line = data
+    logging.info(info)
+    _, file_index, offset = info
+    title = _preprocessing.ind_to_title[file_index]
+    character = _preprocessing.pos_to_character_dicts[file_index][offset]
     logging.info('LINE: %s', line)
-    logging.info('start_file_index: %d', info[2])
-    logging.info('start_position: %d', info[3])
+    logging.info(title)
+    logging.info(character)
     for word in get_words(line.lower()):
-        yield (word + _SEP + title, line)
+        yield (word + _SEP + title + _SEP + character, line)
 
 
 def index_reduce(key, values):
@@ -222,15 +225,17 @@ def index_reduce(key, values):
     if not word:
         word = Word(id=word_value, name=word_value)
     
-    mentions_in_work = WordMentionsInWork(parent=word.key, id=work_value, 
-        title=work_value)
-    mentions_in_work.mentions = []
+    work = Work(parent=word.key, id=work_value, title=work_value)
 
+    char_value = "Dummy Character" # TODO: CHANGE
+    char = Character(parent=work.key, id=char_value, name=char_value)
+    
     for line in values:
-        mentions_in_work.mentions.append(line)
+        char.mentions.append(line)
     
     word.put()
-    mentions_in_work.put()
+    work.put()
+    char.put()
     yield '%s: %s\n' % (key, list(set(values)))
 
 
@@ -250,8 +255,8 @@ from third_party.mapreduce import mapreduce_pipeline
                 'index',
                 'controllers.admin_page.index_map',
                 'controllers.admin_page.index_reduce',
-                'mapreduce.input_readers.BlobstoreZipLineInputReader',
-                'mapreduce.output_writers.BlobstoreOutputWriter',
+                'third_party.mapreduce.input_readers.BlobstoreZipLineInputReader',
+                'third_party.mapreduce.output_writers.BlobstoreOutputWriter',
                 mapper_params={
                     'input_reader': {
                         'blob_keys': blobkey,
