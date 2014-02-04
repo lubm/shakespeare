@@ -5,6 +5,18 @@ from google.appengine.ext import blobstore
 import zipfile
 import re
 
+class FileIndexTooLargeError(Exception):
+    """To be raised when a file index that does not exist is requested."""
+    def __init__(self, num_files, index_requested):
+        self.num_files = num_files
+        self.ind_requested = index_requested
+
+    def __repr__(self):
+        return 'Preprocessing only identified %d files in zipfile and %d file \ 
+            index was requested.', self.num_files, self.ind_requested
+    
+    def __str__(self):
+        return repr(self)
 
 class Preprocessing(object):
     """Preprocess Shakespeare's works to identify titles and characters.
@@ -57,7 +69,7 @@ class Preprocessing(object):
         return re.sub(r"[A-Za-z]+('[A-Za-z]+)?", lambda mo:
             mo.group(0)[0].upper() + mo.group(0)[1:].lower(), title)
 
-    def get_title(self, my_file):
+    def find_title(self, my_file):
         """Retrieve first non_empty line of file as title.
 
         Also, it sets the offset attribute to hold the position of the last
@@ -87,7 +99,6 @@ class Preprocessing(object):
         line = my_file.readline()
         reg = re.compile(r'([^\s]+)\t.*$')
         # Find title repeated
-        print title
         while title not in line:
             self.offset += len(line)
             line = my_file.readline()
@@ -108,7 +119,40 @@ class Preprocessing(object):
         with zipfile.ZipFile(blob_reader) as zip_files:
             for count, name in enumerate(zip_files.namelist()):
                 with zip_files.open(name, 'r') as my_file:
-                    title = self.get_title(my_file)
+                    title = self.find_title(my_file)
                     self.ind_to_title[count] = self.titlecase(title)
                     self.parse_file(my_file, title)
+
+    def get_title(self, index):
+        """Get title of work.
+       
+        Args:
+            index: index of file relative to zipfile passed to initializer
+
+        Returns:
+            title: a string with the capitalized title or None if index not
+                found
+        """
+        if index >= len(self.ind_to_title):
+            raise FileIndexTooLargeError(len(self.ind_to_title), index)
+        return self.ind_to_title[index]
+
+    def get_character(self, index, offset):
+        """Get character relative to a line.
+
+        Args:
+            index: index of file relative to zipfile passed to initializer
+            offset: initial byte offset of line relative to the text file
+
+        Returns:
+            character: a string with the name of the character or empty string
+                if the line is not pronounced by any character
+        """
+        if index >= len(self.pos_to_character_dicts):
+            raise FileIndexTooLargeError(len(self.pos_to_character_dicts),
+                                         index)
+        pos_to_char = self.pos_to_character_dicts[index]
+        if offset in pos_to_char:
+            return pos_to_char[offset]
+        return ''
 

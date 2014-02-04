@@ -11,8 +11,14 @@ handlers:
 - url: /third_party/js
   static_dir: third_party/js
 
+- url: /tests
+  static_dir: tests
+
+- url: /mapreduce/pipeline/images
+  static_dir: third_party/mapreduce/lib/pipeline/ui/images
+
 - url: /mapreduce(/.*)?
-  script: mapreduce.main.APP
+  script: third_party.mapreduce.main.APP
   login: admin
 
 - url: /admin
@@ -29,7 +35,4 @@ handlers:
 libraries:
 - name: jinja2
   version: "2.6"
-
-includes:
-- third_party/mapreduce/include.yaml
 

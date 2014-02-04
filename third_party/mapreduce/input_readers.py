@@ -1702,7 +1702,6 @@ class BlobstoreZipLineInputReader(InputReader):
     self._zip = None
     self._entries = None
     self._filestream = None
-    self._filename = None
 
   @classmethod
   def validate(cls, mapper_spec):
@@ -1813,7 +1812,6 @@ class BlobstoreZipLineInputReader(InputReader):
         raise StopIteration()
       entry = self._entries.pop()
       value = self._zip.read(entry.filename)
-      self._filename = entry.filename
       self._filestream = StringIO.StringIO(value)
       if self._initial_offset:
         self._filestream.seek(self._initial_offset)
@@ -1830,7 +1828,7 @@ class BlobstoreZipLineInputReader(InputReader):
       self._initial_offset = 0
       return self.next()
 
-    return ((self._blob_key, self._filename, self._start_file_index, start_position),
+    return ((self._blob_key, self._start_file_index, start_position),
             line.rstrip("\n"))
 
   def _next_offset(self):
