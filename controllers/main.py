@@ -1,4 +1,4 @@
-"""Defines the application handlers"""
+"""Defines the application routing"""
 import webapp2
 
 from controllers.admin_page import AdminPageController

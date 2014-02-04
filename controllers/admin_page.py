@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#
+
 # Copyright 2011 Google Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,17 +43,17 @@ add_third_party_path()
 
 from google.appengine.ext import blobstore
 from google.appengine.ext import db
+from google.appengine.ext import ndb
 from google.appengine.api import users
 from google.appengine.ext.webapp import blobstore_handlers
+
+from models.character import Character
+from models.word import Word
+from models.work import Work
+from preprocessing import Preprocessing
+from resources.constants import Constants
 from third_party.mapreduce import base_handler
 from third_party.mapreduce import mapreduce_pipeline
-from models.word import Word
-from models.word_mentions_in_work import WordMentionsInWork
-from resources.constants import Constants
-
-
-from google.appengine.ext import ndb
-
 
 class Parent(db.Model):
     """ A dumb parent class.
@@ -66,7 +66,7 @@ class Parent(db.Model):
     pass
 
 
-PARENT = Parent(key_name='parent')
+_PARENT = Parent(key_name='parent')
 
 
 class FileMetadata(db.Model):
@@ -116,11 +116,15 @@ class FileMetadata(db.Model):
         return str(username + sep + str(date) + sep + blob_key)
 
 
+_preprocessing = None
+
 class AdminPageController(webapp2.RequestHandler):
     """A controller to the admin page.
 
     It handles the upload of works to the database. The map-reduce job is
-    triggered on this page also."""
+    triggered on this page also.
+    
+    """
 
     template_env = jinja2.Environment(
         loader=jinja2.FileSystemLoader('templates'), autoescape=True)
@@ -130,7 +134,7 @@ class AdminPageController(webapp2.RequestHandler):
         """Displays current zip files in the database mapreduce results."""
 
         results_query = FileMetadata.all()
-        results_query.ancestor(PARENT)
+        results_query.ancestor(_PARENT)
 
         items = [result for result in results_query]
         indexed_items = []
@@ -159,6 +163,7 @@ class AdminPageController(webapp2.RequestHandler):
         filekey = self.request.get("filekey")
         blob_key = self.request.get("blobkey")
 
+        _preprocessing = Preprocessing(blob_key)
         pipeline = IndexPipeline(filekey, blob_key)
 
         pipeline.start()
@@ -177,17 +182,7 @@ def capitalize_as_title(title):
     return ' '.join(word[0].upper() + word[1:].lower() for word in
         title.split())
 
-
-def get_title(text):
-    """Get title of work (first non-empty line)."""
-    title = ''
-    for line in text.split('\n'):
-        if line.strip():
-            title = capitalize_as_title(line.strip())
-            return title
-
-
-SEP = '++'
+_SEP = '++'
 
 def index_map(data):
     """Index map function.
@@ -200,44 +195,50 @@ def index_map(data):
     Yields:
         The map function must return a string, because that is what the reduce
         function expects. So, in order to simulate the return of a tuple (word,
-        title), a string in the format {word}SEP{title} is returned. SEP is a
+        title), a string in the format {word}_SEP{title} is returned. SEP is a
         separator constant.
     """
     (info, line) = data
     title = info[1]
+    logging.info('LINE: %s', line)
+    logging.info('start_file_index: %d', info[2])
+    logging.info('start_position: %d', info[3])
     for word in get_words(line.lower()):
-        yield (word + SEP + title, line)
+        yield (word + _SEP + title, line)
 
 
 def index_reduce(key, values):
     """Index reduce function.
 
     Args:
-        key: a string in the format {word}SEP{work}
+        key: a string in the format {word}_SEP{work}
         values: the lines in which {word} appears in {work}
 
     """
-    keys = key.split(SEP)
+    keys = key.split(_SEP)
     word_value = keys[0]
     work_value = keys[1]
     word = Word.get_by_id(word_value)
     if not word:
         word = Word(id=word_value, name=word_value)
     
-    mentions_in_work = WordMentionsInWork(parent=word.key, id=work_value, 
-        title=work_value)
-    mentions_in_work.mentions = []
+    work = Work(parent=word.key, id=work_value, title=work_value)
 
+    char_value = "Dummy Character" # TODO: CHANGE
+    char = Character(parent=work.key, id=char_value, name=char_value)
+    
     for line in values:
-        mentions_in_work.mentions.append(line)
+        char.mentions.append(line)
     
     word.put()
-    mentions_in_work.put()
+    work.put()
+    char.put()
     yield '%s: %s\n' % (key, list(set(values)))
 
 
 class IndexPipeline(base_handler.PipelineBase):
     """A pipeline to run Index demo.
+from third_party.mapreduce import mapreduce_pipeline
 
     Args:
         blobkey: blobkey to process as string. Should be a zip archive with
@@ -304,7 +305,7 @@ class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
         key = FileMetadata.get_key_name(username, date, str_blob_key)
 
         ctx = ndb.get_context()
-        meta = FileMetadata(key_name=key, parent=PARENT)
+        meta = FileMetadata(key_name=key, parent=_PARENT)
         meta.owner = user
         meta.filename = name
         meta.uploaded_on = date
