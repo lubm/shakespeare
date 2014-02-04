@@ -17,6 +17,16 @@ class Preprocessing(object):
         which offset is the byte-offset of each line of text pronounced by a
         character.
 
+        This attributes are global in order to be able to access them from
+            inside our mapreduce functions.
+
+        Attributes:
+            ind_to_title: Dictionary that relates the index of a text file to 
+                the title of the work it refers to.
+            pos_to_character_dicts: Dictionary that relates the index of a text
+                file to the title of the work it refers to.
+            offset: Value used to iterate each file.
+
     """
 
     pos_to_character_dicts = []
@@ -30,16 +40,28 @@ class Preprocessing(object):
             blob_key: A blob key to a zip file containing one or more text files
         """
         self.blob_key = blob_key
-        self.run()
 
     @staticmethod
     def titlecase(title):
-        """Capitalize first letter of each word."""
+        """Capitalize first letter of each word.
+
+        Args:
+            title: The title of the work, found in the first line of each file.
+                This title is stripped(doesn't have any trailing spaces or 
+                front spaces).
+                Examples: 'LOVE'S LABOUR'S LOST', 'OTHELLO'.
+
+        Returns:
+            This title but with only the first letter of each word capitalized.
+        """
         return re.sub(r"[A-Za-z]+('[A-Za-z]+)?", lambda mo:
             mo.group(0)[0].upper() + mo.group(0)[1:].lower(), title)
 
     def get_title(self, my_file):
         """Retrieve first non_empty line of file as title.
+
+        Also, it sets the offset attribute to hold the position of the last
+        character in the title line.
 
         Args:
             my_file: file handler of file to be processed
