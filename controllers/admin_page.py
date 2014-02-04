@@ -43,17 +43,17 @@ add_third_party_path()
 
 from google.appengine.ext import blobstore
 from google.appengine.ext import db
+from google.appengine.ext import ndb
 from google.appengine.api import users
 from google.appengine.ext.webapp import blobstore_handlers
+
+from models.character import Character
 from models.word import Word
-from models.word_mentions_in_work import WordMentionsInWork
+from models.work import Work
 from preprocessing import Preprocessing
 from resources.constants import Constants
 from third_party.mapreduce import base_handler
 from third_party.mapreduce import mapreduce_pipeline
-
-from google.appengine.ext import ndb
-
 
 class Parent(db.Model):
     """ A dumb parent class.
@@ -222,15 +222,17 @@ def index_reduce(key, values):
     if not word:
         word = Word(id=word_value, name=word_value)
     
-    mentions_in_work = WordMentionsInWork(parent=word.key, id=work_value, 
-        title=work_value)
-    mentions_in_work.mentions = []
+    work = Work(parent=word.key, id=work_value, title=work_value)
 
+    char_value = "Dummy Character" # TODO: CHANGE
+    char = Character(parent=work.key, id=char_value, name=char_value)
+    
     for line in values:
-        mentions_in_work.mentions.append(line)
+        char.mentions.append(line)
     
     word.put()
-    mentions_in_work.put()
+    work.put()
+    char.put()
     yield '%s: %s\n' % (key, list(set(values)))
 
 
