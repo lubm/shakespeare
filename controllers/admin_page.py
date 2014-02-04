@@ -115,13 +115,16 @@ class FileMetadata(db.Model):
         sep = FileMetadata.__SEP
         return str(username + sep + str(date) + sep + blob_key)
 
-_preprocessing = null
+
+_preprocessing = None
 
 class AdminPageController(webapp2.RequestHandler):
     """A controller to the admin page.
 
     It handles the upload of works to the database. The map-reduce job is
-    triggered on this page also."""
+    triggered on this page also.
+    
+    """
 
     template_env = jinja2.Environment(
         loader=jinja2.FileSystemLoader('templates'), autoescape=True)
@@ -178,16 +181,6 @@ def capitalize_as_title(title):
     """Formats the sentence to be capitalized as title"""
     return ' '.join(word[0].upper() + word[1:].lower() for word in
         title.split())
-
-
-def get_title(text):
-    """Get title of work (first non-empty line)."""
-    title = ''
-    for line in text.split('\n'):
-        if line.strip():
-            title = capitalize_as_title(line.strip())
-            return title
-
 
 _SEP = '++'
 
