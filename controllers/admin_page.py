@@ -165,6 +165,7 @@ class AdminPageController(webapp2.RequestHandler):
         blob_key = self.request.get("blobkey")
 
         _preprocessing = Preprocessing(blob_key)
+        _preprocessing.run()
 
         pipeline = IndexPipeline(filekey, blob_key)
 
@@ -198,9 +199,8 @@ def index_map(data):
     info, line = data
     logging.info(info)
     _, file_index, offset = info
-    title = _preprocessing.ind_to_title[file_index]
-    pos_to_char = _preprocessing.pos_to_character_dicts[file_index]
-    character = pos_to_char[offset]
+    title = _preprocessing.get_title(file_index)
+    character = _preprocessing.get_character(file_index, offset)
     logging.info('LINE: %s', line)
     logging.info(title)
     logging.info(character)
