@@ -160,14 +160,11 @@ class AdminPageController(webapp2.RequestHandler):
 
     def post(self):
         """Start map reduce job on selected file."""
-        import os
+        global _preprocessing
         filekey = self.request.get("filekey")
         blob_key = self.request.get("blobkey")
 
         _preprocessing = Preprocessing(blob_key)
-
-        print os.environ.get('PYTHONPATH')
-        print '******************'
 
         pipeline = IndexPipeline(filekey, blob_key)
 
@@ -202,7 +199,8 @@ def index_map(data):
     logging.info(info)
     _, file_index, offset = info
     title = _preprocessing.ind_to_title[file_index]
-    character = _preprocessing.pos_to_character_dicts[file_index][offset]
+    pos_to_char = _preprocessing.pos_to_character_dicts[file_index]
+    character = pos_to_char[offset]
     logging.info('LINE: %s', line)
     logging.info(title)
     logging.info(character)
