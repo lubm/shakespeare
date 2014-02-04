@@ -4,7 +4,7 @@
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js">
     </script>
     <script src="static/js/admin.js" type="text/javascript"></script>
-    <script src="static/js/disable_submition_of_empty_inputs.js" 
+    <script src="static/js/disable_submission_of_empty_inputs.js" 
       type="text/javascript">
     </script>
   </head>
@@ -48,7 +48,7 @@
     <div>No files uploaded and not indexed!</div>
     {% endif %}
     <h3>Upload New File</h3>
-    <form action="{{ upload_url }}" method="POST" enctype="multipart/form-data">
+    <form id="upload-form" action="{{ upload_url }}" method="POST" enctype="multipart/form-data">
       <table>
         <tr>
           <td>From your computer:</td>
@@ -63,6 +63,8 @@
       </table>
       <input class="disabled-when-input-is-null-button" type="submit" 
         name="submit" value="Upload" onclick="displayUpdateLoading()"/>
+      <span id="update-error" style="display: none;" >You should upload a .zip
+        file</span>  
       <span id="update-loading" style="display: none;" >Loading...</span>  
     </form>
     <h3>Clear the Database</h3>

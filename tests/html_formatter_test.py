@@ -4,7 +4,7 @@ import unittest
 
 from auxiliary.html_formatter import HTMLFormatter
 
-class ArityWordTest(unittest.TestCase):
+class NumberOfOccurencesTest(unittest.TestCase):
     one_word_values = [
         ('\\b[hH][eE][lL][lL][oO]\\b',
          'You say goodbye and I say hello.',
