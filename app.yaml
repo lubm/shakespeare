@@ -15,7 +15,7 @@ handlers:
   static_dir: tests
 
 - url: /mapreduce(/.*)?
-  script: mapreduce.main.APP
+  script: third_party.mapreduce.main.APP
   login: admin
 
 - url: /admin

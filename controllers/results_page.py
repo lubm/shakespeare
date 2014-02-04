@@ -6,10 +6,11 @@ import time
 
 from google.appengine.ext.webapp import template
 
-from models.word import Word
-from models.word_mentions_in_work import WordMentionsInWork
 from auxiliary.html_formatter import HTMLFormatter
 from auxiliary.regex_formatter import RegexFormatter
+from models.character import Character
+from models.word import Word
+from models.work import Work
 from resources.constants import Constants
 
 def bold_mentions(word_name, mentions):
@@ -58,9 +59,13 @@ def get_work_mentions_of_word_name(word_name):
     work_mentions = {}
     word = Word.get_by_id(word_name)
     if word:
-        works = WordMentionsInWork.query(ancestor=word.key)
+        works = Work.query(ancestor=word.key)
         for work in works:
-            work_mentions[work.title] = bold_mentions(word.name, work.mentions)
+            work_chars = Character.query(ancestor=work.key)
+            mentions = []
+            for char in work_chars:
+                mentions += char.mentions
+            work_mentions[work.title] = bold_mentions(word.name, mentions)
     return work_mentions
 
 
