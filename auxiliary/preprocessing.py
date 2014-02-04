@@ -12,8 +12,8 @@ class FileIndexTooLargeError(Exception):
         self.ind_requested = index_requested
 
     def __repr__(self):
-        return 'Preprocessing only identified %d files in zipfile and %d file \ 
-            index was requested.', self.num_files, self.ind_requested
+        return '''Preprocessing only identified %d files in zipfile and %d file 
+            index was requested.''', self.num_files, self.ind_requested
     
     def __str__(self):
         return repr(self)

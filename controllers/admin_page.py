@@ -49,9 +49,9 @@ from google.appengine.ext.webapp import blobstore_handlers
 
 from models.character import Character
 from models.word import Word
-from models.word_mentions_in_work import WordMentionsInWork
+from models.work import Work
 #from auxiliary.preprocessing import Preprocessing
-from preprocessing import Preprocessing
+from auxiliary.preprocessing import Preprocessing
 from resources.constants import Constants
 from third_party.mapreduce import base_handler
 from third_party.mapreduce import mapreduce_pipeline
