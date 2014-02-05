@@ -333,7 +333,8 @@ class ClearDatastoreHandler(webapp2.RequestHandler):
     def get(self):
         """Clears the datastore."""
         #db.delete(db.Query(keys_only=True))
-        ndb.delete_multi(Word.query(keys_only=True))
-        ndb.delete_multi(Work.query(keys_only=True))
+        ndb.delete_multi(Word.query().fetch(keys_only=True))
+        ndb.delete_multi(Work.query().fetch(keys_only=True))
+        ndb.delete_multi(Character.query().fetch(keys_only=True))
         db.delete(FileMetadata.all(keys_only=True).run())
         self.redirect('/admin')

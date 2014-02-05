@@ -30,24 +30,26 @@ class ClearDatastoreTest(unittest.TestCase):
         """Insert test objects into the datastore."""
         self.objects = []
 
-        self.objects.append(Word(id='borrower', name='borrower'))
-        work = WordMentionsInWork(parent=self.objects[0].key, id='hamlet',
-            title='hamlet')
-        work.mentions = ['Neither a borrower nor a lender be']
-        self.objects.append(work)
+        word = Word(id='borrower', name='borrower')
+        work = Work(parent=word.key, id='hamlet', title='hamlet')
+        char_1 = Character(parent=work.key, id='hamlet', name='hamlet')
+        char_2 = Character(parent=work.key, id='guard', name='guard')
+        char_1.mentions = ['Neither a borrower nor a lender be', 
+            'To be or not to be.']
+        char_2.mentions = ['Ok, boss!']
+        self.objects += [word, work, char_1, char_2]
 
-        self.objects.append(Word(id='neither', name='neither'))
-        work = WordMentionsInWork(parent=self.objects[2].key, id='hamlet',
-            title='hamlet')
-        work.mentions = ['Neither a borrower nor a lender be']
-        self.objects.append(work)
+        word = Word(id='neither', name='neither')
+        work = Work(parent=word.key, id='hamlet', title='hamlet')
+        char = Character(parent=work.key, id='hamlet', name='hamlet')
+        char.mentions = ['Neither a borrower nor a lender be']
+        self.objects += [word, work, char]
 
-        self.objects.append(FileMetadata(filename='dummy'))
-        self.objects.append(FileMetadata(filename='dummy2'))
+        self.objects += [FileMetadata(filename='dummy'), 
+            FileMetadata(filename='dummy2')]
 
-        self.keys = []
         for obj in self.objects:
-            self.keys.append(obj.put())
+            obj.put()
 
     def _set_up_test_application(self):
         """Sets up the environment for calling the handler."""
@@ -76,13 +78,15 @@ class ClearDatastoreTest(unittest.TestCase):
         """
 
         self.assertNotEquals(Word.query().fetch(), [])
-        self.assertNotEquals(WordMentionsInWork.query().fetch(), [])
+        self.assertNotEquals(Work.query().fetch(), [])
+        self.assertNotEquals(Character.query().fetch(), [])
         self.assertNotEquals(list(FileMetadata.all().run()), [])
 
         self.testapp.get('/')
 
         self.assertEquals(Word.query().fetch(), [])
-        self.assertEquals(WordMentionsInWork.query().fetch(), [])
+        self.assertEquals(Work.query().fetch(), [])
+        self.assertEquals(Character.query().fetch(), [])
         self.assertEquals(list(FileMetadata.all().run()), [])
 
 if __name__ == '__main__':
