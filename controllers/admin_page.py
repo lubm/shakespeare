@@ -164,8 +164,8 @@ class AdminPageController(webapp2.RequestHandler):
         filekey = self.request.get("filekey")
         blob_key = self.request.get("blobkey")
 
-        _preprocessing = Preprocessing(blob_key)
-        _preprocessing.run()
+        #_preprocessing = Preprocessing(blob_key)
+        #_preprocessing.run()
 
         pipeline = IndexPipeline(filekey, blob_key)
 
@@ -197,15 +197,16 @@ def index_map(data):
         separator constant.
     """
     info, line = data
-    logging.info(info)
-    _, file_index, offset = info
-    title = _preprocessing.get_title(file_index)
-    character = _preprocessing.get_character(file_index, offset)
-    logging.info('LINE: %s', line)
-    logging.info(title)
-    logging.info(character)
+    title = str(info[1]) #number for now
+    #logging.info(info)
+    #_, file_index, offset = info
+    #title = _preprocessing.get_title(file_index)
+    #character = _preprocessing.get_character(file_index, offset)
+    #logging.info('LINE: %s', line)
+    #logging.info(title)
+    #logging.info(character)
     for word in get_words(line.lower()):
-        yield (word + _SEP + title + _SEP + character, line)
+        yield (word + _SEP + title, line)
 
 
 def index_reduce(key, values):

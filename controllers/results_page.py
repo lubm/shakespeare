@@ -74,7 +74,8 @@ class ResultsPageController(webapp2.RequestHandler):
         """Renders the results of a search"""
         searched_value = self.request.get('searched_word')
         value = searched_value.lower() if searched_value else ''
-
+        
+        work_mentions = {}
         if value:
             start = time.time()
             work_mentions = get_work_mentions_of_word_name(cgi.escape(value))
