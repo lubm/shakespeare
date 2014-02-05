@@ -238,15 +238,12 @@ def index_reduce(key, values):
 
 
 class IndexPipeline(base_handler.PipelineBase):
-    """A pipeline to run Index demo.
-from third_party.mapreduce import mapreduce_pipeline
+    """A pipeline to run Index.
 
     Args:
         blobkey: blobkey to process as string. Should be a zip archive with
             text files inside.
     """
-
-
     def run(self, filekey, blobkey):
         """Run the pipeline of the mapreduce job."""
         output = yield mapreduce_pipeline.MapreducePipeline(

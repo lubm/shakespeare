@@ -5,6 +5,8 @@ from google.appengine.ext import blobstore
 import zipfile
 import re
 
+_preprocessing = None
+
 class FileIndexTooLargeError(Exception):
     """To be raised when a file index that does not exist is requested."""
     def __init__(self, num_files, index_requested):
@@ -40,18 +42,9 @@ class Preprocessing(object):
             offset: Value used to iterate each file.
 
     """
-
-    pos_to_character_dicts = []
-    ind_to_title = {}
-    offset = 0
-
-    def __init__(self, blob_key):
-        """Initialize the preprocessing object and run it.
-
-        Args:
-            blob_key: A blob key to a zip file containing one or more text files
-        """
-        self.blob_key = blob_key
+        pos_to_character_dicts = []
+        ind_to_title = {}
+        offset = 0
 
     @staticmethod
     def titlecase(title):
@@ -69,7 +62,8 @@ class Preprocessing(object):
         return re.sub(r"[A-Za-z]+('[A-Za-z]+)?", lambda mo:
             mo.group(0)[0].upper() + mo.group(0)[1:].lower(), title)
 
-    def find_title(self, my_file):
+    @classmethod
+    def find_title(cls, my_file):
         """Retrieve first non_empty line of file as title.
 
         Also, it sets the offset attribute to hold the position of the last
@@ -84,10 +78,11 @@ class Preprocessing(object):
         line = ''
         while not line.strip():
             line = my_file.readline()
-            self.offset += len(line)
+            cls.offset += len(line)
         return line.strip()
 
-    def parse_file(self, my_file, title):
+    @classmethod
+    def parse_file(cls, my_file, title):
         """Builds the dict that maps file offset to character.
 
         Args:
@@ -100,7 +95,7 @@ class Preprocessing(object):
         reg = re.compile(r'([^\s]+)\t.*$')
         # Find title repeated
         while title not in line:
-            self.offset += len(line)
+            cls.offset += len(line)
             line = my_file.readline()
         while line:
             if line.strip():
@@ -108,22 +103,28 @@ class Preprocessing(object):
                 match = reg.match(line)
                 if match:
                     charac = match.group(1)
-                pos_to_char[self.offset] = charac
-            self.offset += len(line)
+                pos_to_char[cls.offset] = charac
+            cls.offset += len(line)
             line = my_file.readline()
-        self.pos_to_character_dicts.append(pos_to_char)
+        cls.pos_to_character_dicts.append(pos_to_char)
 
-    def run(self):
-        """Open a zipfile and preprocess each of its text files."""
-        blob_reader = blobstore.BlobReader(self.blob_key)
+    @classmethod
+    def run(cls, blob_key):
+        """Open a zipfile and preprocess each of its text files.
+        Args:
+            blob_key: A blob key to a zip file containing one or more text files
+        """
+        cls.offset = 0
+        blob_reader = blobstore.BlobReader(blob_key)
         with zipfile.ZipFile(blob_reader) as zip_files:
             for count, name in enumerate(zip_files.namelist()):
                 with zip_files.open(name, 'r') as my_file:
                     title = self.find_title(my_file)
-                    self.ind_to_title[count] = self.titlecase(title)
-                    self.parse_file(my_file, title)
+                    cls.ind_to_title[count] = cls.titlecase(title)
+                    cls.parse_file(my_file, title)
 
-    def get_title(self, index):
+    @classmethod
+    def get_title(cls, index):
         """Get title of work.
 
         Args:
@@ -133,11 +134,12 @@ class Preprocessing(object):
             title: a string with the capitalized title or None if index not
                 found
         """
-        if index >= len(self.ind_to_title):
-            raise FileIndexTooLargeError(len(self.ind_to_title), index)
-        return self.ind_to_title[index]
+        if index >= len(cls.ind_to_title):
+            raise FileIndexTooLargeError(len(cls.ind_to_title), index)
+        return cls.ind_to_title[index]
 
-    def get_character(self, index, offset):
+    @classmethod
+    def get_character(cls, index, offset):
         """Get character relative to a line.
 
         Args:
@@ -148,11 +150,113 @@ class Preprocessing(object):
             character: a string with the name of the character or empty string
                 if the line is not pronounced by any character
         """
-        if index >= len(self.pos_to_character_dicts):
-            raise FileIndexTooLargeError(len(self.pos_to_character_dicts),
+        if index >= len(cls.pos_to_character_dicts):
+            raise FileIndexTooLargeError(len(cls.pos_to_character_dicts),
                                          index)
-        pos_to_char = self.pos_to_character_dicts[index]
+        pos_to_char = cls.pos_to_character_dicts[index]
         if offset in pos_to_char:
             return pos_to_char[offset]
         return ''
+    
+    @staticmethod
+    def get_epilog_len(text, title):
+        epilog_reg = re.compile(r'\s*' + title + '.*' + title)
+        result = re.match(epilog_regex, text)
+        epilog_len = result.span()[1]
+        return epilog_len
 
+    @staticmethod
+    def get_speaks_offsets(body):
+        char_reg = re.compile(r'^([A-Z].*)\t')
+        offset_to_char = {}
+        for match in char_reg.finditer(body)
+            offset = match.start()
+            character = match.group()
+            offset_to_char[offset] = character
+
+
+def preprocessing_map(data):
+    """ """
+    zipinfo, text_fn = data
+    filename = zipinfo.filename
+    ind = get_index(filename) # TODO
+    text = text_fn()
+    title = Preprocessing.find_title(text)
+    offset = Preprocessing.get_epilog_len(text, title)
+    body = text[offset:]
+    offset_to_char = get_speaks_offsets(body)
+    for key in offset_to_char:
+        yield ind, str(key) + _SEP + offset_to_char[key]
+    
+
+    
+    
+
+
+    
+
+
+
+
+
+
+    reg = re.compile(r'([^\s]+)\t.*$')
+    charac = ''
+    pos_to_char = {}
+    title_not_found = True
+    offset = 0
+   
+    for line in text.split('\n'):
+        if title_not_found:
+            if title in line:
+                title_not_found = False
+        else:
+            if line.strip():
+                match = reg.match(line)
+                if match:
+                    charac = match.group(1)
+        
+        offset += len(line) + 1 # +1 because of the removed \n
+
+
+    
+    line = my_file.readline()
+    # Find title repeated
+    while title not in line:
+        cls.offset += len(line)
+        line = my_file.readline()
+    while line:
+        if line.strip():
+            # if line has character
+            match = reg.match(line)
+            if match:
+                charac = match.group(1)
+            pos_to_char[cls.offset] = charac
+        cls.offset += len(line)
+        line = my_file.readline()
+    cls.pos_to_character_dicts.append(pos_to_char)
+
+
+        
+
+
+class PrePipeline(base_handler.PipelineBase):
+    """A pipeline to run preprocessing.
+
+    Args:
+        blobkey: blobkey to process as string. Should be a zip archive with
+            text files inside.
+    """
+    def run(self, filekey, blobkey):
+        """Run the pipeline of the mapreduce job."""
+        output = yield mapreduce_pipeline.MapreducePipeline(
+                'preprocessing',
+                'auxiliary.preprocessing.pre_map',
+                'auxiliary.preprocessing.pre_reduce',
+                'third_party.mapreduce.input_readers.BlobstoreZipLineInputReader',
+                mapper_params={
+                    'input_reader': {
+                        'blob_keys': blobkey,
+                    },
+                },
+                shards=16)
