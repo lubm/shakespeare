@@ -8,9 +8,9 @@ function drawChart(arrayData) {
     var tree = new google.visualization.TreeMap(document.
         getElementById('treemap'));
     tree.draw(data, {
-        minColor: '#b00',
-        midColor: '#ddd',
-        maxColor: '#080',
+        minColor: '#313BC0',
+        midColor: '#fff',
+        maxColor: '#C12222',
         fontColor: 'black',
         showScale: true});
 }
