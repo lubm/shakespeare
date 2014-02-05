@@ -12,9 +12,9 @@ class FileIndexTooLargeError(Exception):
         self.ind_requested = index_requested
 
     def __repr__(self):
-        return '''Preprocessing only identified %d files in zipfile and %d file 
+        return '''Preprocessing only identified %d files in zipfile and %d file
             index was requested.''', self.num_files, self.ind_requested
-    
+
     def __str__(self):
         return repr(self)
 
@@ -33,7 +33,7 @@ class Preprocessing(object):
             inside our mapreduce functions.
 
         Attributes:
-            ind_to_title: Dictionary that relates the index of a text file to 
+            ind_to_title: Dictionary that relates the index of a text file to
                 the title of the work it refers to.
             pos_to_character_dicts: Dictionary that relates the index of a text
                 file to the title of the work it refers to.
@@ -59,7 +59,7 @@ class Preprocessing(object):
 
         Args:
             title: The title of the work, found in the first line of each file.
-                This title is stripped(doesn't have any trailing spaces or 
+                This title is stripped(doesn't have any trailing spaces or
                 front spaces).
                 Examples: 'LOVE'S LABOUR'S LOST', 'OTHELLO'.
 
@@ -125,7 +125,7 @@ class Preprocessing(object):
 
     def get_title(self, index):
         """Get title of work.
-       
+
         Args:
             index: index of file relative to zipfile passed to initializer
 
