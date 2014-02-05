@@ -8,6 +8,7 @@ from controllers.admin_page import UploadHandler
 from controllers.home_page import HomePageController
 from controllers.results_page import ResultsPageController
 from controllers.define_page import DefinePageController
+from controllers.results_page import TreemapHandler
 
 APP = webapp2.WSGIApplication([
     ('/', HomePageController),
@@ -17,4 +18,5 @@ APP = webapp2.WSGIApplication([
     (r'/blobstore/(.*)', DownloadHandler),
     ('/define', DefinePageController),
     ('/clear', ClearDatastoreHandler),
+    ('/treemap', TreemapHandler)
 ], debug=True)

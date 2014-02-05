@@ -32,7 +32,7 @@ function updateForm(filekey, blobkey, filename) {
     $('#index').attr("disabled", false);
 }
 
-$(document).ready(function(){
+$(document).ready(function() {
     $("#index-form").submit(function(event) {
         event.preventDefault();
 

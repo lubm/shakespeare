@@ -3,6 +3,7 @@
 import cgi
 import webapp2
 import time
+from webapp2_extras import json
 
 from google.appengine.ext.webapp import template
 
@@ -87,3 +88,49 @@ class ResultsPageController(webapp2.RequestHandler):
         self.response.headers['Content-Type'] = 'text/html'
         self.response.out.write(template.render('templates/results.html',
             template_values))
+
+class TreemapHandler(webapp2.RequestHandler):
+    """Class for retrieving data for the visualization"""
+
+    def get(self):
+        """Retrieves formatted information to the treemap visualization"""
+        print "---------------------------- in get"
+        searched_value = self.request.get('searched_word')
+        print searched_value
+        value = searched_value.lower() if searched_value else ''
+
+        if value:
+            print "----------------- inside if"
+            work_mentions = get_work_mentions_of_word_name(cgi.escape(value))
+        
+            treemap_data = [['Location', 'Parent', 'Word Occurrences'],
+                          ['Shakespeare\'s Corpus', None, 0]]
+
+            for title in work_mentions:
+                treemap_data.append([title, 'Shakespeare\'s Corpus', 
+                    len(work_mentions[title])])
+
+            print treemap_data
+
+            self.response.headers['Content-Type'] = 'text/json'
+            self.response.out.write(json.encode({"array": treemap_data}))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
