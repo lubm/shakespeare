@@ -50,7 +50,7 @@ from google.appengine.ext.webapp import blobstore_handlers
 from models.character import Character
 from models.word import Word
 from models.work import Work
-from preprocessing import Preprocessing
+from auxiliary.preprocessing import Preprocessing
 from resources.constants import Constants
 from third_party.mapreduce import base_handler
 from third_party.mapreduce import mapreduce_pipeline
@@ -160,10 +160,13 @@ class AdminPageController(webapp2.RequestHandler):
 
     def post(self):
         """Start map reduce job on selected file."""
+        global _preprocessing
         filekey = self.request.get("filekey")
         blob_key = self.request.get("blobkey")
 
         _preprocessing = Preprocessing(blob_key)
+        _preprocessing.run()
+
         pipeline = IndexPipeline(filekey, blob_key)
 
         pipeline.start()
@@ -176,11 +179,6 @@ def get_words(line):
     line = re.sub(r'[_0-9]+', ' ', line)
     return set(line.split())
 
-
-def capitalize_as_title(title):
-    """Formats the sentence to be capitalized as title"""
-    return ' '.join(word[0].upper() + word[1:].lower() for word in
-        title.split())
 
 _SEP = '++'
 
@@ -198,13 +196,16 @@ def index_map(data):
         title), a string in the format {word}_SEP{title} is returned. SEP is a
         separator constant.
     """
-    (info, line) = data
-    title = info[1]
+    info, line = data
+    logging.info(info)
+    _, file_index, offset = info
+    title = _preprocessing.get_title(file_index)
+    character = _preprocessing.get_character(file_index, offset)
     logging.info('LINE: %s', line)
-    logging.info('start_file_index: %d', info[2])
-    logging.info('start_position: %d', info[3])
+    logging.info(title)
+    logging.info(character)
     for word in get_words(line.lower()):
-        yield (word + _SEP + title, line)
+        yield (word + _SEP + title + _SEP + character, line)
 
 
 def index_reduce(key, values):
@@ -252,8 +253,8 @@ from third_party.mapreduce import mapreduce_pipeline
                 'index',
                 'controllers.admin_page.index_map',
                 'controllers.admin_page.index_reduce',
-                'mapreduce.input_readers.BlobstoreZipLineInputReader',
-                'mapreduce.output_writers.BlobstoreOutputWriter',
+                'third_party.mapreduce.input_readers.BlobstoreZipLineInputReader',
+                'third_party.mapreduce.output_writers.BlobstoreOutputWriter',
                 mapper_params={
                     'input_reader': {
                         'blob_keys': blobkey,
