@@ -11,8 +11,9 @@ import webapp2
 
 from google.appengine.ext import testbed
 
+from models.character import Character
 from models.word import Word
-from models.word_mentions_in_work import WordMentionsInWork
+from models.work import Work
 from controllers.admin_page import FileMetadata
 from controllers.admin_page import ClearDatastoreHandler
 
