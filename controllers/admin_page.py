@@ -116,8 +116,6 @@ class FileMetadata(db.Model):
         return str(username + sep + str(date) + sep + blob_key)
 
 
-_preprocessing = None
-
 class AdminPageController(webapp2.RequestHandler):
     """A controller to the admin page.
 
@@ -160,12 +158,10 @@ class AdminPageController(webapp2.RequestHandler):
 
     def post(self):
         """Start map reduce job on selected file."""
-        global _preprocessing
         filekey = self.request.get("filekey")
         blob_key = self.request.get("blobkey")
 
-        _preprocessing = Preprocessing(blob_key)
-        _preprocessing.run()
+        Preprocessing.run(blob_key)
 
         pipeline = IndexPipeline(filekey, blob_key)
 
@@ -199,8 +195,8 @@ def index_map(data):
     info, line = data
     logging.info(info)
     _, file_index, offset = info
-    title = _preprocessing.get_title(file_index)
-    character = _preprocessing.get_character(file_index, offset)
+    title = Preprocessing.get_title(file_index)
+    character = Preprocessing.get_character(file_index, offset)
     logging.info('LINE: %s', line)
     logging.info(title)
     logging.info(character)
