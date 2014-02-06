@@ -1,12 +1,14 @@
 """ A module to preprocess Shakespeare's works, gathering metadata."""
 #TODO(izabela): treat files that do not follow the pattern
 
-import zipfile
+import logging
 import re
+import zipfile
 
 from google.appengine.ext import blobstore
 from mapreduce import base_handler
 from mapreduce import mapreduce_pipeline
+
 
 class FileIndexTooLargeError(Exception):
     """To be raised when a file index that does not exist is requested."""
@@ -74,9 +76,9 @@ class Preprocessing(object):
             raise FileIndexTooLargeError(len(cls.pos_to_character_dicts),
                                          index)
         pos_to_char = cls.pos_to_character_dicts[index]
-        if offset in pos_to_char:
-            return pos_to_char[offset]
-        return ''
+        #Find closest smaller offset in which a character starts a speak
+        closest_offset = bisect.bisect(sorted(pos_to_char.keys()))
+        return pos_to_char[offset]
 
     @staticmethod
     def titlecase(title):
@@ -152,6 +154,7 @@ class Preprocessing(object):
                 of the zipfile being processed, at the 100th byte, there is a
                 speak by Hamlet.  
         """
+        print 'MAP'
         zipinfo, text_fn = data
         filename = zipinfo.filename
         ind = Preprocessing.get_index(filename)
@@ -161,6 +164,7 @@ class Preprocessing(object):
         offset = Preprocessing.get_epilog_len(text, title)
         body = text[offset:]
         offset_to_char = Preprocessing.get_speaks_offsets(body)
+        print offset_to_char
         for key in offset_to_char:
             yield ind, str(key) + _SEP + offset_to_char[key]
 
@@ -182,7 +186,7 @@ class Preprocessing(object):
             offset = split[0]
             character = split[1]
             pos_to_char_dict[offset] = character
-        Preprocessing.pos_to_char_dicts[key] = pos_to_char_dict
+        Preprocessing.pos_to_character_dicts[key] = pos_to_char_dict
 
     @classmethod
     def build_name_to_ind(cls, blobkey):
@@ -196,7 +200,7 @@ class Preprocessing(object):
         """
         blob_reader = blobstore.BlobReader(blobkey)
         with zipfile.ZipFile(blob_reader) as zip_files:
-            cls.filename_to_ind = {index: info.filename for (index, info) in
+            cls.filename_to_ind = {info.filename: index for (index, info) in
                                    enumerate(zip_files.infolist())}
     
     @classmethod
@@ -213,7 +217,7 @@ class Preprocessing(object):
         return ''
 
     @classmethod
-    def run(cls, blobkey):
+    def run(cls, blobkey, filekey):
         """Run the mapreduce job to preprocess the works.
         
         Args:
@@ -223,7 +227,7 @@ class Preprocessing(object):
         cls.ind_to_title = {}
         cls.filename_to_ind = {}
         cls.build_name_to_ind(blobkey)
-        pipeline =  PrePipeline(blobkey)
+        pipeline =  PrePipeline(blobkey, filekey)
         pipeline.start()
     
 
@@ -234,9 +238,14 @@ class PrePipeline(base_handler.PipelineBase):
         blobkey: blobkey to process as string. Should be a zip archive with
             text files inside.
     """
-    def run(self, blobkey):
+    def __init__(self, blobkey, filekey):
+        super(PrePipeline, self).__init__(blobkey, filekey)
+        self.blobkey = blobkey
+        self.filekey = filekey
+
+    def run(self, blobkey, filekey):
         """Run the pipeline of the mapreduce job."""
-        yield mapreduce_pipeline.MapreducePipeline(
+        pipeline = yield mapreduce_pipeline.MapreducePipeline(
                 'preprocessing',
                 'auxiliary.preprocessing.Preprocessing.preprocessing_map',
                 'auxiliary.preprocessing.Preprocessing.preprocessing_reduce',
@@ -248,3 +257,125 @@ class PrePipeline(base_handler.PipelineBase):
                 },
                 shards=16)
 
+    def finalized(self):
+        logging.info('Preprocessing finished succesfully')
+        print Preprocessing.pos_to_character_dicts
+        print '**************************'
+        print Preprocessing.ind_to_title
+        print '**************************'
+        print Preprocessing.filename_to_ind
+        print '**************************'
+        #pipeline = IndexPipeline(self.filekey, self.blobkey)
+        #pipeline.start()
+
+
+def get_words(line):
+    """Split a line into list of words."""
+    line = re.sub(r'\W+', ' ', line)
+    line = re.sub(r'[_0-9]+', ' ', line)
+    return set(line.split())
+
+
+_SEP = '++'
+
+def index_map(data):
+    """Index map function.
+
+    Args:
+        data: Refers to a line from the input files. Is actually composed of a
+            tuple (lineinfo, line). This is the return value from the
+            ZipLineInputReader, available in the input readers of mapreduce.
+
+    Yields:
+        The map function must return a string, because that is what the reduce
+        function expects. So, in order to simulate the return of a tuple (word,
+        title), a string in the format {word}_SEP{title} is returned. SEP is a
+        separator constant.
+    """
+    info, line = data
+    logging.info(info)
+    _, file_index, offset = info
+    print Preprocessing.ind_to_title
+    title = Preprocessing.get_title(file_index)
+    character = Preprocessing.get_character(file_index, offset)
+    logging.info('LINE: %s', line)
+    logging.info(title)
+    logging.info(character)
+    for word in get_words(line.lower()):
+        yield (word + _SEP + title + _SEP + character, line)
+
+
+def index_reduce(key, values):
+    """Index reduce function.
+
+    Args:
+        key: a string in the format {word}_SEP{work}
+        values: the lines in which {word} appears in {work}
+
+    """
+    keys = key.split(_SEP)
+    word_value = keys[0]
+    work_value = keys[1]
+    word = Word.get_by_id(word_value)
+    if not word:
+        word = Word(id=word_value, name=word_value)
+    
+    work = Work(parent=word.key, id=work_value, title=work_value)
+
+    char_value = "Dummy Character" # TODO: CHANGE
+    char = Character(parent=work.key, id=char_value, name=char_value)
+    
+    for line in values:
+        char.mentions.append(line)
+    
+    word.put()
+    work.put()
+    char.put()
+    yield '%s: %s\n' % (key, list(set(values)))
+
+
+class IndexPipeline(base_handler.PipelineBase):
+    """A pipeline to run Index.
+
+    Args:
+        blobkey: blobkey to process as string. Should be a zip archive with
+            text files inside.
+    """
+    def run(self, filekey, blobkey):
+        """Run the pipeline of the mapreduce job."""
+        output = yield mapreduce_pipeline.MapreducePipeline(
+                'index',
+                'auxiliary.preprocessing.index_map',
+                'auxiliary.preprocessing.index_reduce',
+                'mapreduce.input_readers.BlobstoreZipLineInputReader',
+                'mapreduce.output_writers.BlobstoreOutputWriter',
+                mapper_params={
+                    'input_reader': {
+                        'blob_keys': blobkey,
+                    },
+                },
+                reducer_params={
+                    'output_writer': {
+                        'mime_type': 'text/plain',
+                        'output_sharding': 'input',
+                        'filesystem': 'blobstore',
+                    },
+                },
+                shards=16)
+        yield StoreOutput(filekey, output)
+
+
+class StoreOutput(base_handler.PipelineBase):
+    """A pipeline to store the result of the MapReduce job in the database.
+
+    Args:
+        encoded_key: the DB key corresponding to the metadata of this job
+        output: the blobstore location where the output of the job is stored
+    """
+
+    def run(self, encoded_key, output):
+        """ Store result of map reduce job."""
+        key = db.Key(encoded=encoded_key)
+        meta = FileMetadata.get(key)
+        meta.index_link = output[0]
+        meta.put()
