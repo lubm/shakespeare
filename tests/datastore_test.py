@@ -48,7 +48,7 @@ class DatastoreTest(unittest.TestCase):
     def test_insert_entities(self):
         '''Ensures that the entities are saved in the database.
 
-        If we can retrieved they are correctly stored'''
+        If we can retrieved they are correctly stored.'''
         retrieved_word = self.word_key.get()
         self.assertEqual(2, retrieved_word.count)
         self.assertEqual(2, retrieved_word.count)
@@ -62,10 +62,12 @@ class DatastoreTest(unittest.TestCase):
             retrieved_character.mentions)
 
     def test_searching_a_non_existing_word(self):
+        '''Ensure nothing fails if we search a word that doesn't exist.'''
         retrieved_word = Word.get_by_id("sdfgfdgdgf")   
         self.assertEqual(retrieved_word, None)   
 
     def test_filter_entities_using_query_works(self):
+        '''We can search for all the entities starting from a word.'''
         retrieved_word = Word.get_by_id("death")  
         self.assertEqual('death', retrieved_word.name)
         self.assertEqual(2, retrieved_word.count)
