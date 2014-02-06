@@ -15,10 +15,10 @@ handlers:
   static_dir: tests
 
 - url: /mapreduce/pipeline/images
-  static_dir: third_party/mapreduce/lib/pipeline/ui/images
+  static_dir: mapreduce/lib/pipeline/ui/images
 
 - url: /mapreduce(/.*)?
-  script: third_party.mapreduce.main.APP
+  script: mapreduce.main.APP
   login: admin
 
 - url: /admin

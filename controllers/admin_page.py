@@ -38,8 +38,8 @@ import webapp2
 
 # In order to allow the third party modules to be visible within themselves, it
 # is required to add the third party path to sys.path
-from third_party import add_third_party_path
-add_third_party_path()
+#from third_party import add_third_party_path
+#add_third_party_path()
 
 from google.appengine.ext import blobstore
 from google.appengine.ext import db
@@ -52,8 +52,8 @@ from models.word import Word
 from models.work import Work
 from auxiliary.preprocessing import Preprocessing
 from resources.constants import Constants
-from third_party.mapreduce import base_handler
-from third_party.mapreduce import mapreduce_pipeline
+from mapreduce import base_handler
+from mapreduce import mapreduce_pipeline
 
 class Parent(db.Model):
     """ A dumb parent class.
@@ -259,8 +259,8 @@ from third_party.mapreduce import mapreduce_pipeline
                 'index',
                 'controllers.admin_page.index_map',
                 'controllers.admin_page.index_reduce',
-                'third_party.mapreduce.input_readers.BlobstoreZipLineInputReader',
-                'third_party.mapreduce.output_writers.BlobstoreOutputWriter',
+                'mapreduce.input_readers.BlobstoreZipLineInputReader',
+                'mapreduce.output_writers.BlobstoreOutputWriter',
                 mapper_params={
                     'input_reader': {
                         'blob_keys': blobkey,
