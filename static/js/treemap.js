@@ -1,10 +1,7 @@
 google.load('visualization', '1', {packages:['treemap']});
 
 function drawChart(arrayData) {
-    debugger;
-    console.log(arrayData)
     data = google.visualization.arrayToDataTable(arrayData["array"]);
-    debugger;
     var tree = new google.visualization.TreeMap(document.
         getElementById('treemap'));
     tree.draw(data, {
