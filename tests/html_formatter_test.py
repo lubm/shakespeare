@@ -2,7 +2,7 @@
 
 import unittest
 
-from auxiliary.html_formatter import HTMLFormatter
+from auxiliary.formatter import HTMLFormatter
 
 class NumberOfOccurencesTest(unittest.TestCase):
     one_word_values = [

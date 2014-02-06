@@ -5,8 +5,8 @@ import webapp2
 import time
 from webapp2_extras import json
 
-from auxiliary.html_formatter import HTMLFormatter
-from auxiliary.regex_formatter import RegexFormatter
+from auxiliary.formatter import HTMLFormatter
+from auxiliary.formatter import RegexFormatter
 from models.character import Character
 from models.word import Word
 from models.work import Work

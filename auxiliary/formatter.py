@@ -27,3 +27,26 @@ class HTMLFormatter(object):
                 '\\b' + match + '\\b', '<%s>%s</%s>' % (tag, match, tag),
                 formatted_text)
         return formatted_text
+
+
+class RegexFormatter(object):
+    '''Regular expression manipulation.'''
+
+    @classmethod
+    def get_any_case_word_regex(cls, word):
+        '''Given a word, this method will create a regex capable of matching it
+        disregarding its case.
+
+        All the posible combination of the word with capital or regular letters
+        will be matched.
+
+        Args:
+            The word to match, with any capital state.
+
+        Returns:
+            A regex.'''
+        regex = '\\b'
+        for letter in word.lower():
+            regex += '[' + letter + letter.upper() + ']'
+        regex += '\\b'
+        return regex
