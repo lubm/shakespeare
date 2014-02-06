@@ -5,19 +5,25 @@ import os
 
 class CaseInstance(object):
 
-    def __init__(self, test_input, expected_output):
-        self.test_input = test_input
-        self.expected_output = expected_output
+    def __init__(self, text, title, formatted_title, characters):
+        self.text = text
+        self.title = title
+        self.formatted_title = formatted_title
+        self.characters = characters
 
 class PreprocessingTest(unittest.TestCase):
 
-    case_instances = [CaseInstance('''	JORGE
+    case_instances = [
+        CaseInstance(text='''	JORGE
         	JORGE
         ANA Jorge I (Hanover, 28 de maio de 1660 Osnabruque, 11 de junho
         de 1727) foi o Rei da GraBretanha e Irlanda de 1 de agosto de 1714 
         at sua morte, e tambem governante do Ducado e Eleitorado de II.''',
-        'JORGE'),
-        CaseInstance('''	THE TAMING OF THE SHREW
+        title='JORGE',
+        formatted_title='Jorge',
+        characters=['ANA']),
+
+        CaseInstance(text='''	THE TAMING OF THE SHREW
 
 
         	DRAMATIS PERSONAE
@@ -113,8 +119,11 @@ class PreprocessingTest(unittest.TestCase):
         SLY	Ye are a baggage: the Slys are no rogues; look in
             the chronicles; we came in with Richard Conqueror.
             Therefore paucas pallabris; let the world slide: sessa!''',
-        'THE TAMING OF THE SHREW'),
-        CaseInstance('''	HAMLET
+        title='THE TAMING OF THE SHREW',
+        formatted_title='The Taming Of The Shrew',
+        characters=['SLY']),
+
+        CaseInstance(text='''	HAMLET
 
 
             DRAMATIS PERSONAE
@@ -221,8 +230,12 @@ class PreprocessingTest(unittest.TestCase):
         FRANCISCO	For this relief much thanks: 'tis bitter cold,
             And I am sick at heart.
 
-        BERNARDO	Have you had quiet guard?''', 'HAMLET'),
-        CaseInstance('''  	A LOVER'S COMPLAINT
+        BERNARDO	Have you had quiet guard?''', 
+        title='HAMLET',
+        formatted_title='Hamlet',
+        characters=['BERNARDO', 'FRANCISCO']),
+
+        CaseInstance(text='''  	A LOVER'S COMPLAINT
 
 
 
@@ -233,13 +246,19 @@ class PreprocessingTest(unittest.TestCase):
         Ere long espied a fickle maid full pale,
         Tearing of papers, breaking rings a-twain,
         Storming her world with sorrow's wind and rain.''', 
-        '''A LOVER'S COMPLAINT''')]
+        title='A LOVER\'S COMPLAINT',
+        formatted_title='A Lover\'s Complaint',
+        characters=[])]
 
     def test_find_title(self):
         for case_instance in self.case_instances:
-            title = Preprocessing.find_title(case_instance.test_input)
-            self.assertEqual(title, case_instance.expected_output)
+            title = Preprocessing.find_title(case_instance.text)
+            self.assertEqual(title, case_instance.title)
 
+    def test_titlecase(self):
+        for case_instance in self.case_instances:
+            formatted_title = Preprocessing.titlecase(case_instance.title)
+            self.assertEqual(formatted_title, case_instance.formatted_title)
 
 if __name__ == '__main__':
     unittest.main()
