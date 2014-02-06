@@ -114,10 +114,10 @@ class Preprocessing(object):
         char_reg = re.compile(r'(^|\n)([A-Z].*)\t')
         offset_to_char = {}
         for match in char_reg.finditer(body):
-			offset = match.start(2)
-			character = match.group(2)
-			if not re.match('SCENE|ACT', character):
-				offset_to_char[offset] = character
+            offset = match.start(2)
+            character = match.group(2)
+            if not re.match('SCENE|ACT', character):
+                offset_to_char[offset] = character
         return offset_to_char
 
     @staticmethod
@@ -132,8 +132,8 @@ class Preprocessing(object):
             title: a string containing the title the same way it is written in
                 text. 
         """
-        epilog_reg = re.compile(r'.*\t' + title + '.*\t' + title + '\s*\n', flags=re.DOTALL
-                               )
+        epilog_reg = re.compile(r'.*?\t' + title + '.*?\t' + title + '\s*\n', 
+			flags=re.DOTALL)
         result = re.match(epilog_reg, text)
         epilog_len = result.span()[1]
         return epilog_len
@@ -163,8 +163,11 @@ class Preprocessing(object):
         print '********************************'
         text = text_fn()
         title = Preprocessing.find_title(text)
+        print title
         Preprocessing.ind_to_title[ind] = Preprocessing.titlecase(title)
+        print Preprocessing.ind_to_title[ind]
         offset = Preprocessing.get_epilog_len(text, title)
+        print offset
         body = text[offset:]
         offset_to_char = Preprocessing.get_speaks_offsets(body)
         print offset_to_char
