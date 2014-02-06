@@ -11,9 +11,9 @@ function updateForm(filekey, blobkey, filename) {
 }
 
 $(document).ready(function(){
-
     /* Submits the selected file to be indexed. */
     $('#index-form').submit(function(event) {
+
         event.preventDefault();
 
         data = {
