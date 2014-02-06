@@ -221,8 +221,13 @@ def index_reduce(key, values):
     word_value = keys[0]
     work_value = keys[1]
     word = Word.get_by_id(word_value)
+
+    word_count = len(values)
     if not word:
-        word = Word(id=word_value, name=word_value)
+        word = Word(id=word_value, name=word_value, count=word_count)
+    else:
+        word.count += word_count
+    word.put()
     
     work = Work(parent=word.key, id=work_value, title=work_value)
 
@@ -232,9 +237,9 @@ def index_reduce(key, values):
     for line in values:
         char.mentions.append(line)
     
-    word.put()
     work.put()
     char.put()
+
     yield '%s: %s\n' % (key, list(set(values)))
 
 

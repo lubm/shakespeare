@@ -22,7 +22,7 @@ class DatastoreTest(unittest.TestCase):
         self.testbed.activate()
         self.testbed.init_datastore_v3_stub()
 
-        self.word = Word(id="borrower", name="borrower")
+        self.word = Word(id="borrower", name="borrower", count=2)
         self.work = WordMentionsInWork(parent=self.word.key, id="hamlet", title="hamlet")
         self.work.mentions = ['Neither a borrower nor a lender be']
 
@@ -44,15 +44,21 @@ class DatastoreTest(unittest.TestCase):
 
         If we can retrieved they are correctly stored"""
         retrieved_word = self.word_key.get()
-        self.assertEqual(self.word.name, retrieved_word.name)
+        self.assertEqual(self.word.count, retrieved_word.count)
+        self.assertEqual(self.word.count, retrieved_word.count)
 
         retrieved_work = self.work_key.get()
         self.assertEqual(self.work.title, retrieved_work.title)
         self.assertEqual(self.work.mentions, retrieved_work.mentions)
 
+    def test_searching_a_non_existing_word(self):
+        retrieved_word = Word.get_by_id("sdfgfdgdgf")   
+        self.assertEqual(retrieved_word, None)   
+
     def test_filter_entities_using_query_works(self):
         retrieved_word = Word.get_by_id("borrower")  
         self.assertEqual(self.word.name, retrieved_word.name)
+        self.assertEqual(self.word.count, retrieved_word.count)
 
         query_works = WordMentionsInWork.query(ancestor=self.word.key)
         retrieved_works = query_works.fetch()
