@@ -42,33 +42,33 @@
                {{ number_results }} results ({{ time }} seconds)
             </div>
             {% if did_you_mean%}
-            <div id="did-you-mean">
-               <span class="google-red"> 
-               Did you mean:
-               </span>
-               <b><i>
-                  <a href='/search?searched_word={{did_you_mean}}'> 
-                  {{ did_you_mean }}
-                  </a>
-               </i></b>
-            </div>
+               <div id="did-you-mean">
+                  <span class="google-red"> 
+                     Did you mean:
+                  </span>
+                  <b><i>
+                     <a href='/search?searched_word={{did_you_mean}}'> 
+                        {{ did_you_mean }}
+                     </a>
+                  </i></b>
+               </div>
             {% endif %}
          </div>
          <div class="col-md-8 ">
             <div id="results">
                {% if work_mentions %}
-               {% for work, lines in work_mentions.items %}
-               <div class="result-item">
-                  <div class="title text-danger">{{ work }}</div>
-                  <i>
-                     {% for line in lines %}
-                     <p class="result-line">{{ line|safe }}</p>
-                     {% endfor %}
-                  </i>
-               </div>
-               {% endfor %}
+                  {% for work, lines in work_mentions.items() %}
+                  <div class="result-item">
+                     <div class="title text-danger">{{ work }}</div>
+                     <i>
+                        {% for line in lines %}
+                        <p class="result-line">{{ line|safe }}</p>
+                        {% endfor %}
+                     </i>
+                  </div>
+                  {% endfor %}
                {% else %}
-               <p>No results found for <i>{{ searched_word }}</i> </p>
+                  <p>No results found for <i>{{ searched_word }}</i> </p>
                {% endif %}
             </div>
          </div>
