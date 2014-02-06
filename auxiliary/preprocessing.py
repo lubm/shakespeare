@@ -102,7 +102,7 @@ class Preprocessing(object):
     @staticmethod
     def find_title(text):
         title_reg = re.compile(r'\t([A-Z]+.*[A-Z])\s*\n')
-        title = re.match(title_reg, text).group(1)
+        title = re.search(title_reg, text).group(1)
         return title
 
     @staticmethod
