@@ -10,7 +10,7 @@ from models.character import Character
 from models.word import Word
 from models.work import Work
 from resources.constants import Constants
-from auxiliary.spelling_corrector import SpellingCorrector
+import auxiliary.spelling_corrector as spelling_corrector
 
 
 def bold_mentions(word_name, mentions):
@@ -88,7 +88,7 @@ class ResultsPageController(webapp2.RequestHandler):
             'work_mentions': work_mentions,
             'number_results': count_dict_values(work_mentions),
             'time': round(end - start, 4),
-            'did_you_mean': SpellingCorrector().get_suggestion(value)
+            'did_you_mean': spelling_corrector.get_suggestion(value)
         }
 
         self.response.headers['Content-Type'] = 'text/html'
