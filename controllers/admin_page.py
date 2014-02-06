@@ -118,7 +118,7 @@ class AdminPageController(webapp2.RequestHandler):
 
     It handles the upload of works to the database. The map-reduce job is
     triggered on this page also.
-    
+
     """
 
     template_env = jinja2.Environment(
@@ -133,7 +133,7 @@ class AdminPageController(webapp2.RequestHandler):
 
         items = [result for result in results_query]
         indexed_items = []
-        uploaded_items =[]
+        uploaded_items = []
         for item in items:
             if item.index_link:
                 indexed_items.append(item)
@@ -223,15 +223,15 @@ def index_reduce(key, values):
     else:
         word.count += word_count
     word.put()
-    
+
     work = Work(parent=word.key, id=work_value, title=work_value)
 
     char_value = "Dummy Character" # TODO: CHANGE
     char = Character(parent=work.key, id=char_value, name=char_value)
-    
+
     for line in values:
         char.mentions.append(line)
-    
+
     work.put()
     char.put()
 
