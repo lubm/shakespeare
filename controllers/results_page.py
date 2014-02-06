@@ -3,6 +3,7 @@
 import cgi
 import webapp2
 import time
+from webapp2_extras import json
 
 from auxiliary.html_formatter import HTMLFormatter
 from auxiliary.regex_formatter import RegexFormatter
@@ -94,3 +95,25 @@ class ResultsPageController(webapp2.RequestHandler):
         self.response.headers['Content-Type'] = 'text/html'
         template = Constants.JINJA_ENVIRONMENT.get_template('results.html')
         self.response.write(template.render(template_values))
+
+
+class TreemapHandler(webapp2.RequestHandler):
+    """Class for retrieving data for the visualization"""
+
+    def get(self):
+        """Retrieves formatted information to the treemap visualization"""
+        searched_value = self.request.get('searched_word')
+        value = searched_value.lower() if searched_value else ''
+
+        if value:
+            work_mentions = get_work_mentions_of_word_name(cgi.escape(value))
+        
+            treemap_data = [['Location', 'Parent', 'Word Occurrences'],
+                          ['Shakespeare\'s Corpus', None, 0]]
+
+            for title in work_mentions:
+                treemap_data.append([title, 'Shakespeare\'s Corpus', 
+                    len(work_mentions[title])])
+
+            self.response.headers['Content-Type'] = 'text/json'
+            self.response.out.write(json.encode({"array": treemap_data}))
