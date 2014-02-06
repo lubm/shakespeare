@@ -11,6 +11,8 @@ from models.word_mentions_in_work import WordMentionsInWork
 from auxiliary.html_formatter import HTMLFormatter
 from auxiliary.regex_formatter import RegexFormatter
 from resources.constants import Constants
+from auxiliary.spelling_corrector import SpellingCorrector
+
 
 def bold_mentions(word_name, mentions):
     """Turns into bold certain word in textual mentions.
@@ -81,7 +83,8 @@ class ResultsPageController(webapp2.RequestHandler):
             'searched_word': value,
             'work_mentions': work_mentions,
             'number_results': count_dict_values(work_mentions),
-            'time': round(end - start, 4)
+            'time': round(end - start, 4),
+            'did_you_mean': SpellingCorrector().get_suggestion(value)
         }
 
         self.response.headers['Content-Type'] = 'text/html'

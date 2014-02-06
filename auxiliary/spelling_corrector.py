@@ -44,16 +44,25 @@ class SpellingCorrector(object):
 
         return set(deletes + transposes + replaces + inserts)
 
-    def words_edit_distance_two(self, word):
-        return set(e2 for e1 in self.words_edit_distance_one(word) for e2 in self.words_edit_distance_one(e1) if e2 in Word.all())
-
-    def known_words(self, words): 
+    def get_candidates(self, words): 
         known_words = []
         for word in words:
-          if Word.get_by_id(word):
-            known_words.append(word)
+            word_from_database = Word.get_by_id(word)
+            if word_from_database:
+                known_words.append(word_from_database)
         return known_words
 
-    def correct(self, word):
-        candidates = self.known_words([word]) or self.known_words(self.words_edit_distance_one(word)) or self.words_edit_distance_two(word) or [word]
-        return max(candidates, key=Word.all())
+    def get_suggestion(self, word):
+        if Word.get_by_id(word):
+            return None
+
+        candidates = self.get_candidates(self.words_edit_distance_one(word))
+        best_count = 0
+        suggestion = None
+        for candidate in candidates:
+            if candidate.count > best_count:
+                best_count = candidate.count
+                suggestion = candidate
+        if suggestion:
+            return suggestion.name
+        return None

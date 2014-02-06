@@ -98,9 +98,26 @@ class SpellingCorrectorTest(unittest.TestCase):
         self.assertTrue(option4 in 
             self.spelling_corrector.words_edit_distance_one('love'))
 
+    def test_get_candidates(self):
+        self.assertEqual(self.spelling_corrector.get_candidates(['lve']), [])
+        retrieved_result = self.spelling_corrector.get_candidates(['love', 'borrower'])
+        self.assertEqual(len(retrieved_result), 2)
+        self.assertEqual(retrieved_result[0].name, 'love')
+        self.assertEqual(retrieved_result[1].name, 'borrower')
 
-    def test_words_edit_distance_two(self):
-        Word(id="borwer", name="borwer", count=4).put()
-        
-        self.assertTrue('borwer' 
-            in self.spelling_corrector.words_edit_distance_two('borrower'))
+    def test_correct_if_there_is_only_one_candidate(self):
+        self.assertEqual(self.spelling_corrector.get_suggestion('lve'), 'love')
+        self.assertEqual(self.spelling_corrector.get_suggestion('borruwer'), 'borrower')
+
+    def test_correct_if_there_is_multiple_candidates(self):
+        Word(id="lave", name="lave", count=1).put()
+        self.assertEqual(self.spelling_corrector.get_suggestion('lve'), 'love')
+        Word(id="lie", name="lie", count=100).put()
+        self.assertEqual(self.spelling_corrector.get_suggestion('lve'), 'lie')
+
+    def test_dont_show_suggestion_is_there_are_no_suggestions(self):
+        self.assertEqual(self.spelling_corrector.get_suggestion('jdsjhdgfjdkahgd'), None)
+
+    def test_if_the_word_is_found_no_show_suggestions(self):
+        self.assertEqual(self.spelling_corrector.get_suggestion('love'), None)
+
