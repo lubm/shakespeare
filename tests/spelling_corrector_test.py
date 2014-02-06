@@ -1,7 +1,6 @@
 import unittest
 import random
 
-from google.appengine.ext import ndb
 from google.appengine.ext import testbed
 
 from models.word import Word
@@ -15,7 +14,7 @@ Known GAE issue: https://code.google.com/p/nose-gae/issues/detail?id=60
 
 class SpellingCorrectorTest(unittest.TestCase):
     def setUp(self):
-        """ Creates an instance of Testbed class and initializes it with the 
+        """ Creates an instance of Testbed class and initializes it with the
         datastore stub.
 
         Also creates the words and stores them in the database."""
@@ -29,11 +28,9 @@ class SpellingCorrectorTest(unittest.TestCase):
         self.borrower_key = self.borrower.put()
         self.love_key = self.love.put()
 
-        self.spelling_corrector_object = spelling_corrector.SpellingCorrector()
-
     def tearDown(self):
-        """Deactivate the testbed. 
-        This restores the original stubs so that tests do not interfere with 
+        """Deactivate the testbed.
+        This restores the original stubs so that tests do not interfere with
         each other."""
 
         self.borrower_key.delete()
@@ -42,18 +39,18 @@ class SpellingCorrectorTest(unittest.TestCase):
         self.testbed.deactivate()
 
     def test_generate_splits_of_a_word(self):
-        self.assertEqual(spelling_corrector._splits('love'), 
-            [('', 'love'), ('l', 'ove'), ('lo', 've'), ('lov', 'e'), 
+        self.assertEqual(spelling_corrector._splits('love'),
+            [('', 'love'), ('l', 'ove'), ('lo', 've'), ('lov', 'e'),
             ('love', '')])
 
     def test_generate_deletes_of_a_list_of_splited_words(self):
         self.assertEqual(spelling_corrector._deletes(
-            [('lo', 've'), ('l', 'ove')]), 
+            [('lo', 've'), ('l', 'ove')]),
             ['loe', 'lve'])
 
     def test_generate_transposes_of_a_list_of_splited_words(self):
         self.assertEqual(spelling_corrector._transposes(
-            [('lo', 've'), ('l', 'ove')]), 
+            [('lo', 've'), ('l', 'ove')]),
             ['loev', 'lvoe'])
 
     def test_generate_replaces_of_a_list_of_splited_words(self):
@@ -75,36 +72,42 @@ class SpellingCorrectorTest(unittest.TestCase):
             [('lo', 've'), ('l', 'ove')]), inserts)
 
     def test_words_edit_distance_one_should_contain_all_the_types(self):
-        option1 = random.choice(spelling_corrector._deletes([('lo', 've'), ('l', 'ove')]))
+        option1 = random.choice(
+            spelling_corrector._deletes([('lo', 've'), ('l', 'ove')]))
 
-        option2 = random.choice(spelling_corrector._replaces([('lo', 've'), ('l', 'ove')]))
+        option2 = random.choice(
+            spelling_corrector._replaces([('lo', 've'), ('l', 'ove')]))
 
-        option3 = random.choice(spelling_corrector._transposes([('lo', 've'), ('l', 'ove')]))
+        option3 = random.choice(
+            spelling_corrector._transposes([('lo', 've'), ('l', 'ove')]))
 
-        option4 = random.choice(spelling_corrector._inserts([('lo', 've'), ('l', 'ove')]))
+        option4 = random.choice(
+            spelling_corrector._inserts([('lo', 've'), ('l', 'ove')]))
 
-        self.assertTrue(option1 in 
+        self.assertTrue(option1 in
             spelling_corrector._words_edit_distance_one('love'))
 
-        self.assertTrue(option2 in 
+        self.assertTrue(option2 in
             spelling_corrector._words_edit_distance_one('love'))
 
-        self.assertTrue(option3 in 
+        self.assertTrue(option3 in
             spelling_corrector._words_edit_distance_one('love'))
 
-        self.assertTrue(option4 in 
+        self.assertTrue(option4 in
             spelling_corrector._words_edit_distance_one('love'))
 
     def test_get_candidates(self):
         self.assertEqual(spelling_corrector._get_candidates(['lve']), [])
-        retrieved_result = spelling_corrector._get_candidates(['love', 'borrower'])
+        retrieved_result = spelling_corrector._get_candidates(
+            ['love', 'borrower'])
         self.assertEqual(len(retrieved_result), 2)
         self.assertEqual(retrieved_result[0].name, 'love')
         self.assertEqual(retrieved_result[1].name, 'borrower')
 
     def test_correct_if_there_is_only_one_candidate(self):
         self.assertEqual(spelling_corrector.get_suggestion('lve'), 'love')
-        self.assertEqual(spelling_corrector.get_suggestion('borruwer'), 'borrower')
+        self.assertEqual(spelling_corrector.get_suggestion('borruwer'),
+            'borrower')
 
     def test_correct_if_there_is_multiple_candidates(self):
         Word(id="lave", name="lave", count=1).put()
@@ -113,7 +116,8 @@ class SpellingCorrectorTest(unittest.TestCase):
         self.assertEqual(spelling_corrector.get_suggestion('lve'), 'lie')
 
     def test_dont_show_suggestion_is_there_are_no_suggestions(self):
-        self.assertEqual(spelling_corrector.get_suggestion('jdsjhdgfjdkahgd'), None)
+        self.assertEqual(spelling_corrector.get_suggestion('jdsjhdgfjdkahgd'),
+            None)
 
     def test_if_the_word_is_found_no_show_suggestions(self):
         self.assertEqual(spelling_corrector.get_suggestion('love'), None)

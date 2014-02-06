@@ -9,10 +9,13 @@ from models.word import Word
 _ALPHABET = 'abcdefghijklmnopqrstuvwxyz'
 
 def get_suggestion(word):
-    '''Gets a suggestion for a misspelled word.
+    '''Gets the most used suggestion for a misspelled word.
 
     The suggestion must exist in the database and must have distance 1 to the
     input word.
+
+    There is more than one suggestion at distance 1 that exists in the database,
+    it chooses the one that appears the database.
 
     Args:
         word: misspelled word.
@@ -61,7 +64,7 @@ def _transposes(list_of_splited_words):
     transposes = []
     for beg, ending in list_of_splited_words:
         if len(ending) > 1:
-            transposes.append(beg + ending[1] + beg[0] + ending[2:])
+            transposes.append(beg + ending[1] + ending[0] + ending[2:])
     return transposes
 
 def _replaces(list_of_splited_words):
