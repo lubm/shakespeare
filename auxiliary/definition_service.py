@@ -28,6 +28,8 @@ class DefinitionResponse(messages.Message):
     definition = messages.StringField(1, repeated=True)
 
 
+#Instance of 'DefinitionService' has no 'Stub' member (no-member)
+#pylint: disable-msg=E1101
 class DefinitionService(remote.Service):
     """Remote Server used to define words.
 

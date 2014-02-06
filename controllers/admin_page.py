@@ -38,8 +38,8 @@ import webapp2
 
 # In order to allow the third party modules to be visible within themselves, it
 # is required to add the third party path to sys.path
-#from import add_path
-#add_path()
+#from third_party import add_third_party_path
+#add_third_party_path()
 
 from google.appengine.ext import blobstore
 from google.appengine.ext import db
@@ -161,7 +161,8 @@ class AdminPageController(webapp2.RequestHandler):
         filekey = self.request.get("filekey")
         blob_key = self.request.get("blobkey")
 
-        Preprocessing.run(blob_key)
+        #_preprocessing = Preprocessing(blob_key)
+        #_preprocessing.run()
 
         pipeline = IndexPipeline(filekey, blob_key)
         
@@ -193,15 +194,16 @@ def index_map(data):
         separator constant.
     """
     info, line = data
-    logging.info(info)
-    _, file_index, offset = info
-    title = Preprocessing.get_title(file_index)
-    character = Preprocessing.get_character(file_index, offset)
-    logging.info('LINE: %s', line)
-    logging.info(title)
-    logging.info(character)
+    title = str(info[1]) #number for now
+    #logging.info(info)
+    #_, file_index, offset = info
+    #title = _preprocessing.get_title(file_index)
+    #character = _preprocessing.get_character(file_index, offset)
+    #logging.info('LINE: %s', line)
+    #logging.info(title)
+    #logging.info(character)
     for word in get_words(line.lower()):
-        yield (word + _SEP + title + _SEP + character, line)
+        yield (word + _SEP + title, line)
 
 
 def index_reduce(key, values):
@@ -216,8 +218,13 @@ def index_reduce(key, values):
     word_value = keys[0]
     work_value = keys[1]
     word = Word.get_by_id(word_value)
+
+    word_count = len(values)
     if not word:
-        word = Word(id=word_value, name=word_value)
+        word = Word(id=word_value, name=word_value, count=word_count)
+    else:
+        word.count += word_count
+    word.put()
     
     work = Work(parent=word.key, id=work_value, title=work_value)
 
@@ -227,9 +234,9 @@ def index_reduce(key, values):
     for line in values:
         char.mentions.append(line)
     
-    word.put()
     work.put()
     char.put()
+
     yield '%s: %s\n' % (key, list(set(values)))
 
 
@@ -325,5 +332,9 @@ class ClearDatastoreHandler(webapp2.RequestHandler):
 
     def get(self):
         """Clears the datastore."""
-        db.delete(db.Query(keys_only=True))
+        #db.delete(db.Query(keys_only=True))
+        ndb.delete_multi(Word.query().fetch(keys_only=True))
+        ndb.delete_multi(Work.query().fetch(keys_only=True))
+        ndb.delete_multi(Character.query().fetch(keys_only=True))
+        db.delete(FileMetadata.all(keys_only=True).run())
         self.redirect('/admin')

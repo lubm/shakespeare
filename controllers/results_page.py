@@ -3,6 +3,7 @@
 import cgi
 import webapp2
 import time
+from webapp2_extras import json
 
 from auxiliary.html_formatter import HTMLFormatter
 from auxiliary.regex_formatter import RegexFormatter
@@ -10,6 +11,8 @@ from models.character import Character
 from models.word import Word
 from models.work import Work
 from resources.constants import Constants
+import auxiliary.spelling_corrector as spelling_corrector
+
 
 def bold_mentions(word_name, mentions):
     """Turns into bold certain word in textual mentions.
@@ -74,7 +77,8 @@ class ResultsPageController(webapp2.RequestHandler):
         """Renders the results of a search"""
         searched_value = self.request.get('searched_word')
         value = searched_value.lower() if searched_value else ''
-
+        
+        work_mentions = {}
         if value:
             start = time.time()
             work_mentions = get_work_mentions_of_word_name(cgi.escape(value))
@@ -84,9 +88,32 @@ class ResultsPageController(webapp2.RequestHandler):
             'searched_word': value,
             'work_mentions': work_mentions,
             'number_results': count_dict_values(work_mentions),
-            'time': round(end - start, 4)
+            'time': round(end - start, 4),
+            'did_you_mean': spelling_corrector.get_suggestion(value)
         }
 
         self.response.headers['Content-Type'] = 'text/html'
         template = Constants.JINJA_ENVIRONMENT.get_template('results.html')
         self.response.write(template.render(template_values))
+
+
+class TreemapHandler(webapp2.RequestHandler):
+    """Class for retrieving data for the visualization"""
+
+    def get(self):
+        """Retrieves formatted information to the treemap visualization"""
+        searched_value = self.request.get('searched_word')
+        value = searched_value.lower() if searched_value else ''
+
+        if value:
+            work_mentions = get_work_mentions_of_word_name(cgi.escape(value))
+        
+            treemap_data = [['Location', 'Parent', 'Word Occurrences'],
+                          ['Shakespeare\'s Corpus', None, 0]]
+
+            for title in work_mentions:
+                treemap_data.append([title, 'Shakespeare\'s Corpus', 
+                    len(work_mentions[title])])
+
+            self.response.headers['Content-Type'] = 'text/json'
+            self.response.out.write(json.encode({"array": treemap_data}))
