@@ -4,9 +4,14 @@
 import zipfile
 import re
 
+# In order to allow the third party modules to be visible within themselves, it
+# is required to add the third party path to sys.path
+#from import add_path
+#add_path()
+
 from google.appengine.ext import blobstore
-from third_party.mapreduce import base_handler
-from third_party.mapreduce import mapreduce_pipeline
+from mapreduce import base_handler
+from mapreduce import mapreduce_pipeline
 
 class FileIndexTooLargeError(Exception):
     """To be raised when a file index that does not exist is requested."""
@@ -14,12 +19,9 @@ class FileIndexTooLargeError(Exception):
         self.num_files = num_files
         self.ind_requested = index_requested
 
-    def __repr__(self):
-        return '''Preprocessing only identified %d files in zipfile and %d file
-            index was requested.''', self.num_files, self.ind_requested
-
     def __str__(self):
-        return repr(self)
+        return '''Preprocessing only identified %d files in zipfile and %d file
+            index was requested.''' % (self.num_files, self.ind_requested)
 
 
 _SEP = '++'
@@ -99,9 +101,7 @@ class Preprocessing(object):
 
     @staticmethod
     def find_title(text):
-        print text
-        title_reg = re.compile(r'\t([A-Z]+.*[A-Z])\s*$')
-        print re.match(title_reg, text)
+        title_reg = re.compile(r'\t([A-Z]+.*[A-Z])\s*\n')
         title = re.match(title_reg, text).group(1)
         return title
 
@@ -113,11 +113,13 @@ class Preprocessing(object):
             offset = match.start()
             character = match.group()
             offset_to_char[offset] = character
+        return offset_to_char
 
     @staticmethod
     def get_epilog_len(text, title):
-        epilog_reg = re.compile(r'\s*' + title + '.*' + title)
-        result = re.match(epilog_regex, text)
+        epilog_reg = re.compile(r'.*\t' + title + '.*\t' + title + '\s*\n', flags=re.DOTALL
+                               )
+        result = re.match(epilog_reg, text)
         epilog_len = result.span()[1]
         return epilog_len
 
@@ -129,10 +131,10 @@ class Preprocessing(object):
         ind = Preprocessing.get_index(filename)
         text = text_fn()
         title = Preprocessing.find_title(text)
-        Preprocessing.ind_to_title[ind] = titlecase(title)
+        Preprocessing.ind_to_title[ind] = Preprocessing.titlecase(title)
         offset = Preprocessing.get_epilog_len(text, title)
         body = text[offset:]
-        offset_to_char = get_speaks_offsets(body)
+        offset_to_char = Preprocessing.get_speaks_offsets(body)
         for key in offset_to_char:
             yield ind, str(key) + _SEP + offset_to_char[key]
 
@@ -150,9 +152,9 @@ class Preprocessing(object):
     def build_name_to_ind(cls, blobkey):
         blob_reader = blobstore.BlobReader(blobkey)
         with zipfile.ZipFile(blob_reader) as zip_files:
-            for count, name in enumerate(zip_files.namelist()):
-                cls.filename_to_ind[name] = count
-
+            cls.filename_to_ind = {index: info.filename for (index, info) in
+                                   enumerate(zip_files.infolist())}
+    
     @classmethod
     def get_index(cls, filename):
         if filename in cls.filename_to_ind:
@@ -183,7 +185,7 @@ class PrePipeline(base_handler.PipelineBase):
                 'preprocessing',
                 'auxiliary.preprocessing.Preprocessing.preprocessing_map',
                 'auxiliary.preprocessing.Preprocessing.preprocessing_reduce',
-                'third_party.mapreduce.input_readers.BlobstoreZipInputReader',
+                'mapreduce.input_readers.BlobstoreZipInputReader',
                 mapper_params={
                     'input_reader': {
                         'blob_key': blobkey,
