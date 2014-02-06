@@ -109,12 +109,13 @@ class Preprocessing(object):
             body: A string containing a work without the epilog (the section
             before the second appearance of the title).
         """
-        char_reg = re.compile(r'^([A-Z].*)\t')
+        char_reg = re.compile(r'(^|\n)([A-Z].*)\t')
         offset_to_char = {}
         for match in char_reg.finditer(body):
-            offset = match.start()
-            character = match.group()
-            offset_to_char[offset] = character
+			offset = match.start(2)
+			character = match.group(2)
+			if not re.match('SCENE|ACT', character):
+				offset_to_char[offset] = character
         return offset_to_char
 
     @staticmethod
