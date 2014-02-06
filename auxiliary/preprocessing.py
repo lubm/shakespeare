@@ -41,7 +41,7 @@ class Preprocessing(object):
                 file to the title of the work it refers to.
 
     """  
-    pos_to_character_dicts = []
+    pos_to_character_dicts = {}
     ind_to_title = {}
     filename_to_ind = {}
 
@@ -111,12 +111,13 @@ class Preprocessing(object):
             body: A string containing a work without the epilog (the section
             before the second appearance of the title).
         """
-        char_reg = re.compile(r'^([A-Z].*)\t')
+        char_reg = re.compile(r'(^|\n)([A-Z].*)\t')
         offset_to_char = {}
         for match in char_reg.finditer(body):
-            offset = match.start()
-            character = match.group()
-            offset_to_char[offset] = character
+			offset = match.start(2)
+			character = match.group(2)
+			if not re.match('SCENE|ACT', character):
+				offset_to_char[offset] = character
         return offset_to_char
 
     @staticmethod
@@ -154,10 +155,12 @@ class Preprocessing(object):
                 of the zipfile being processed, at the 100th byte, there is a
                 speak by Hamlet.  
         """
-        print 'MAP'
         zipinfo, text_fn = data
         filename = zipinfo.filename
         ind = Preprocessing.get_index(filename)
+        print '********************************'
+        print ind
+        print '********************************'
         text = text_fn()
         title = Preprocessing.find_title(text)
         Preprocessing.ind_to_title[ind] = Preprocessing.titlecase(title)
@@ -180,13 +183,16 @@ class Preprocessing(object):
             values: A list containing elements of the type
                 <offset>_SEP<character>
         """
+        print '*REDUCE*******************************'
+        print key
+        print '********************************'
         pos_to_char_dict = {}
         for value in values:
             split = value.split(_SEP)
             offset = split[0]
             character = split[1]
             pos_to_char_dict[offset] = character
-        Preprocessing.pos_to_character_dicts[key] = pos_to_char_dict
+        Preprocessing.pos_to_character_dicts[int(key)] = pos_to_char_dict
 
     @classmethod
     def build_name_to_ind(cls, blobkey):
@@ -223,7 +229,7 @@ class Preprocessing(object):
         Args:
             blobkey: A blobkey to a zip file containing one or more text files.
         """
-        cls.pos_to_char_dicts = {}
+        cls.pos_to_character_dicts = {}
         cls.ind_to_title = {}
         cls.filename_to_ind = {}
         cls.build_name_to_ind(blobkey)
