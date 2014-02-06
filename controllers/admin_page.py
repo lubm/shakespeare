@@ -36,11 +36,6 @@ import jinja2
 import re
 import webapp2
 
-# In order to allow the third party modules to be visible within themselves, it
-# is required to add the third party path to sys.path
-#from third_party import add_third_party_path
-#add_third_party_path()
-
 from google.appengine.ext import blobstore
 from google.appengine.ext import db
 from google.appengine.ext import ndb
@@ -245,7 +240,6 @@ def index_reduce(key, values):
 
 class IndexPipeline(base_handler.PipelineBase):
     """A pipeline to run Index demo.
-from third_party.mapreduce import mapreduce_pipeline
 
     Args:
         blobkey: blobkey to process as string. Should be a zip archive with
