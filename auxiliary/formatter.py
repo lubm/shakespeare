@@ -2,51 +2,40 @@
 show it with bold tags between the searched word'''
 import re
 
-#Too few public methods (1/2) (too-few-public-methods)
-#pylint: disable=R0903
 
-class HTMLFormatter(object):
-    '''Operations performed into a text in order format it as HTML'''
+def apply_tag_to_pattern(pattern, tag, text):
+    '''Applies a tag into all ocurrences of a word in a given text.
 
-    @classmethod
-    def apply_tag_to_pattern(cls, pattern, tag, text):
-        '''Applies a tag into all ocurrences of a word in a given text.
+    Args:
+        pattern: Regex used to find the word in which the tag should be
+            applied.
+        tag: Tag to be applied. Ex: b for bolding.
+        text: The text in which this processing is going to be executed.
 
-        Args:
-            pattern: Regex used to find the word in which the tag should be
-                applied.
-            tag: Tag to be applied. Ex: b for bolding.
-            text: The text in which this processing is going to be executed.
+    Returns:
+        The text with the tag applied into the desired words.'''
+    formatted_text = text
+    matches = set(re.findall(pattern, text))
+    for match in matches:
+        formatted_text = re.sub(
+            '\\b' + match + '\\b', '<%s>%s</%s>' % (tag, match, tag),
+            formatted_text)
+    return formatted_text
 
-        Returns:
-            The text with the tag applied into the desired words.'''
-        formatted_text = text
-        matches = set(re.findall(pattern, text))
-        for match in matches:
-            formatted_text = re.sub(
-                '\\b' + match + '\\b', '<%s>%s</%s>' % (tag, match, tag),
-                formatted_text)
-        return formatted_text
+def get_any_case_word_regex(word):
+    '''Given a word, this method will create a regex capable of matching it
+    disregarding its case.
 
+    All the posible combination of the word with capital or regular letters
+    will be matched.
 
-class RegexFormatter(object):
-    '''Regular expression manipulation.'''
+    Args:
+        The word to match, with any capital state.
 
-    @classmethod
-    def get_any_case_word_regex(cls, word):
-        '''Given a word, this method will create a regex capable of matching it
-        disregarding its case.
-
-        All the posible combination of the word with capital or regular letters
-        will be matched.
-
-        Args:
-            The word to match, with any capital state.
-
-        Returns:
-            A regex.'''
-        regex = '\\b'
-        for letter in word.lower():
-            regex += '[' + letter + letter.upper() + ']'
-        regex += '\\b'
-        return regex
+    Returns:
+        A regex.'''
+    regex = '\\b'
+    for letter in word.lower():
+        regex += '[' + letter + letter.upper() + ']'
+    regex += '\\b'
+    return regex

@@ -2,7 +2,7 @@
 
 import unittest
 
-from auxiliary.formatter import HTMLFormatter
+import auxiliary.formatter as formatter
 
 class NumberOfOccurencesTest(unittest.TestCase):
     one_word_values = [
@@ -41,19 +41,19 @@ class NumberOfOccurencesTest(unittest.TestCase):
     def test_one_word(self):
         """Test the formatting of dummy tags around word patterns in the text with one word"""
         for pattern, text, expected_result in self.one_word_values:
-            actual_result = HTMLFormatter.apply_tag_to_pattern(pattern, 'tag', text)
+            actual_result = formatter.apply_tag_to_pattern(pattern, 'tag', text)
             self.assertEqual(expected_result, actual_result)
 
     def test_multiple_words(self):
         """Test the formatting of dummy tags around word patterns in the text with multiple words"""
         for pattern, text, expected_result in self.multiple_words_values:
-            actual_result = HTMLFormatter.apply_tag_to_pattern(pattern, 'tag', text)
+            actual_result = formatter.apply_tag_to_pattern(pattern, 'tag', text)
             self.assertEqual(expected_result, actual_result)
 
     def test_no_word(self):
         """Test the formatting of dummy tags around word patterns in the text with no word"""
         for pattern, text, expected_result in self.no_word_values:
-            actual_result = HTMLFormatter.apply_tag_to_pattern(pattern, 'tag', text)
+            actual_result = formatter.apply_tag_to_pattern(pattern, 'tag', text)
             self.assertEqual(expected_result, actual_result)
 
 class CaseTest(unittest.TestCase):
@@ -93,19 +93,19 @@ class CaseTest(unittest.TestCase):
     def testLowerCase(self):
         """Test the formatting of dummy tags around word patterns in the text with the word in lower case"""
         for pattern, text, expected_result in self.lower_case_values:
-            actual_result = HTMLFormatter.apply_tag_to_pattern(pattern, 'tag', text)
+            actual_result = formatter.apply_tag_to_pattern(pattern, 'tag', text)
             self.assertEqual(expected_result, actual_result)
 
     def testUpperCase(self):
         """Test the formatting of dummy tags around word patterns in the text with the word in lower case"""
         for pattern, text, expected_result in self.upper_case_values:
-            actual_result = HTMLFormatter.apply_tag_to_pattern(pattern, 'tag', text)
+            actual_result = formatter.apply_tag_to_pattern(pattern, 'tag', text)
             self.assertEqual(expected_result, actual_result)
 
     def testMixedCase(self):
         """Test the formatting of dummy tags around word patterns in the text with the word in lower case"""
         for pattern, text, expected_result in self.mixed_case_values:
-            actual_result = HTMLFormatter.apply_tag_to_pattern(pattern, 'tag', text)
+            actual_result = formatter.apply_tag_to_pattern(pattern, 'tag', text)
             self.assertEqual(expected_result, actual_result)
 
 
@@ -124,8 +124,27 @@ class WordWithinAnotherTest(unittest.TestCase):
     def testWordWithinAnother(self):
         """Test the formatting of dummy tags around word patterns in the text with the word inside another"""
         for pattern, text, expected_result in self.values:
-            actual_result = HTMLFormatter.apply_tag_to_pattern(pattern, 'tag', text)
+            actual_result = formatter.apply_tag_to_pattern(pattern, 'tag', text)
             self.assertEqual(expected_result, actual_result)
+
+class RegexGeneration(unittest.TestCase):
+
+    def test_generate_regex_for_capital_case_word(self):
+        self.assertEqual(formatter.get_any_case_word_regex('HELLO'),
+            '\\b[hH][eE][lL][lL][oO]\\b')
+
+    def test_generate_regex_for_lower_case_word(self):
+        self.assertEqual(formatter.get_any_case_word_regex('hello'),
+            '\\b[hH][eE][lL][lL][oO]\\b')
+
+    def test_generate_regex_for_mixed_case_word(self):
+        self.assertEqual(formatter.get_any_case_word_regex('HeLlo'),
+            '\\b[hH][eE][lL][lL][oO]\\b')
+
+    def test_does_not_fail_with_empty_string(self):
+        self.assertEqual(formatter.get_any_case_word_regex(''),
+            '\\b\\b')
+
 
 if __name__ == '__main__':
     unittest.main()
