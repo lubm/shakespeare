@@ -3,6 +3,7 @@
    <head>
       <title>Search Shakespeare's Works</title>
       <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+      <script type="text/javascript" src="static/js/results_page_navigation.js"></script>
       <script src="static/js/load_definition.js"></script>
       <script type="text/javascript" src="https://www.google.com/jsapi"></script>
       <script type="text/javascript" src="static/js/treemap.js"></script> 
@@ -60,35 +61,37 @@
                </div>
             {% endif %}
          </div>
-         {% if number_results > 0 %}
-         <div id="treemap" class="harlem-shake" data-animation="flipOutX" style="height: 500px;"></div>
-         {% endif %}
-            <ul class="nav nav-tabs">
-               <li class="active harlem-shake" data-animation="fadeIn"><a href="#">Results</a>
-                  <div id="results" class="col-md-8 ">
-                     {% if work_mentions %}
-                        {% for work, lines in work_mentions.items() %}
-                        <div class="result-item">
-                           <div class="title text-danger harlem-shake" data-animation="tada">{{ work }}</div>
-                           <i>
-                              {% for line in lines %}
-                              <p class="result-line harlem-shake" data-animation="scale">{{ line|safe }}</p>
-                              {% endfor %}
-                           </i>
-                        </div>
+         <ul class="nav nav-tabs">
+            <li class="active harlem-shake" data-animation="fadeIn"><a id="show-results">Results</a></li>
+            <li><a class="harlem-shake" id="show-visualization" data-animation="flip">Visualization</a></li>
+         </ul>
+         <div id='result-tab-content'>
+            <div id="results" class="col-md-8 ">
+               {% if work_mentions %}
+                  {% for work, lines in work_mentions.items() %}
+                  <div class="result-item">
+                     <div class="title text-danger harlem-shake" data-animation="tada">{{ work }}</div>
+                     <i>
+                        {% for line in lines %}
+                        <p class="result-line harlem-shake" data-animation="scale">{{ line|safe }}</p>
                         {% endfor %}
-                     {% else %}
-                        <p class="harlem-shake"data-animation="wobble">No results found for <i>{{ searched_word }}</i> </p>
-                     {% endif %}
+                     </i>
                   </div>
-                  <div class="col-md-4 box harlem-shake" data-animation="swing">
-                     <h3 class="harlem-shake" data-animation="bounce">{{ searched_word }}'s definition:</h3>
-                     <p id='definition'><i id='loading_message'>Loading...</i></p>
-                  </div>
-                  </div>
-               </li>
-               <li><a href="#" class="harlem-shake" data-animation="flip">Visualization</a></li>
-            </ul>
+                  {% endfor %}
+               {% else %}
+                  <p class="harlem-shake"data-animation="wobble">No results found for <i>{{ searched_word }}</i> </p>
+               {% endif %}
+            </div>
+            <div class="col-md-4 box harlem-shake" data-animation="swing">
+               <h3 class="harlem-shake" data-animation="bounce">{{ searched_word }}'s definition:</h3>
+               <p id='definition'><i id='loading_message'>Loading...</i></p>
+            </div>
+         </div> 
+         <div id='visualization-tab-content'>
+            {% if number_results > 0 %}
+               <div id="treemap" class="harlem-shake" data-animation="flipOutX" style="height: 500px;"></div>
+            {% endif %}
          </div>
+      </div>
    </body>
 </html>

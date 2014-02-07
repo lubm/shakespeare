@@ -26,6 +26,10 @@
   font-family: "Apple Chancery", "Zapf Chancery", cursive;
 }
 
+#visualization-tab-content {
+  display: none;
+}
+
 .stats {
   color: grey;
 }
