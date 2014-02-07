@@ -8,9 +8,6 @@ handlers:
 - url: /static
   static_dir: static
 
-- url: /third_party/js
-  static_dir: third_party/js
-
 - url: /tests
   static_dir: tests
 

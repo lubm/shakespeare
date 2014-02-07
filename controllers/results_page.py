@@ -5,8 +5,7 @@ import webapp2
 import time
 from webapp2_extras import json
 
-from auxiliary.html_formatter import HTMLFormatter
-from auxiliary.regex_formatter import RegexFormatter
+import auxiliary.formatter as formatter
 from models.character import Character
 from models.word import Word
 from models.work import Work
@@ -24,10 +23,10 @@ def bold_mentions(word_name, mentions):
     Returns:
         The list of mentions with the word names within bold HTML tags.
     """
-    
-    word_regex = RegexFormatter.get_any_case_word_regex(word_name)
+
+    word_regex = formatter.get_any_case_word_regex(word_name)
     return [
-        HTMLFormatter.apply_tag_to_pattern(word_regex, Constants.BOLD_TAG,
+        formatter.apply_tag_to_pattern(word_regex, Constants.BOLD_TAG,
             line) for line in mentions]
 
 
@@ -77,7 +76,7 @@ class ResultsPageController(webapp2.RequestHandler):
         """Renders the results of a search"""
         searched_value = self.request.get('searched_word')
         value = searched_value.lower() if searched_value else ''
-        
+
         work_mentions = {}
         if value:
             start = time.time()
@@ -107,12 +106,12 @@ class TreemapHandler(webapp2.RequestHandler):
 
         if value:
             work_mentions = get_work_mentions_of_word_name(cgi.escape(value))
-        
+
             treemap_data = [['Location', 'Parent', 'Word Occurrences'],
                           ['Shakespeare\'s Corpus', None, 0]]
 
             for title in work_mentions:
-                treemap_data.append([title, 'Shakespeare\'s Corpus', 
+                treemap_data.append([title, 'Shakespeare\'s Corpus',
                     len(work_mentions[title])])
 
             self.response.headers['Content-Type'] = 'text/json'

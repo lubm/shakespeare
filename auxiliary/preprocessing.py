@@ -8,8 +8,10 @@ import re
 class FileIndexTooLargeError(Exception):
     """To be raised when a file index that does not exist is requested."""
     def __init__(self, num_files, index_requested):
+
         self.num_files = num_files
         self.ind_requested = index_requested
+        Exception.__init__(self, self.__repr__())
 
     def __repr__(self):
         return '''Preprocessing only identified %d files in zipfile and %d file

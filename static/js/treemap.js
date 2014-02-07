@@ -16,6 +16,5 @@ $(document).ready(function() {
     var request = {
         searched_word: $('#search-value').val()
     };
-    console.log(request.searched_word)
     $.get('/treemap', request, drawChart);
 });

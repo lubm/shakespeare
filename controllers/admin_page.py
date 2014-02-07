@@ -36,11 +36,6 @@ import jinja2
 import re
 import webapp2
 
-# In order to allow the third party modules to be visible within themselves, it
-# is required to add the third party path to sys.path
-#from third_party import add_third_party_path
-#add_third_party_path()
-
 from google.appengine.ext import blobstore
 from google.appengine.ext import db
 from google.appengine.ext import ndb
@@ -123,7 +118,7 @@ class AdminPageController(webapp2.RequestHandler):
 
     It handles the upload of works to the database. The map-reduce job is
     triggered on this page also.
-    
+
     """
 
     template_env = jinja2.Environment(
@@ -138,7 +133,7 @@ class AdminPageController(webapp2.RequestHandler):
 
         items = [result for result in results_query]
         indexed_items = []
-        uploaded_items =[]
+        uploaded_items = []
         for item in items:
             if item.index_link:
                 indexed_items.append(item)
@@ -228,15 +223,15 @@ def index_reduce(key, values):
     else:
         word.count += word_count
     word.put()
-    
+
     work = Work(parent=word.key, id=work_value, title=work_value)
 
     char_value = "Dummy Character" # TODO: CHANGE
     char = Character(parent=work.key, id=char_value, name=char_value)
-    
+
     for line in values:
         char.mentions.append(line)
-    
+
     work.put()
     char.put()
 
@@ -245,7 +240,6 @@ def index_reduce(key, values):
 
 class IndexPipeline(base_handler.PipelineBase):
     """A pipeline to run Index demo.
-from third_party.mapreduce import mapreduce_pipeline
 
     Args:
         blobkey: blobkey to process as string. Should be a zip archive with
