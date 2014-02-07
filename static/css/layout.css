@@ -18,16 +18,16 @@
   right: 0px
 }
 
+#word-definition {
+  margin-top: 25px;
+}
+
 #cs-academy{
   position: absolute; 
   bottom: 200px; 
   right: 400px;
   font-size: 72px;
   font-family: "Apple Chancery", "Zapf Chancery", cursive;
-}
-
-#visualization-tab-content {
-  display: none;
 }
 
 .stats {
