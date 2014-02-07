@@ -47,8 +47,6 @@ from models.word import Word
 from models.work import Work
 from auxiliary.preprocessing import Preprocessing
 from resources.constants import Constants
-from mapreduce import base_handler
-from mapreduce import mapreduce_pipeline
 
 class Parent(db.Model):
     """ A dumb parent class.
@@ -111,8 +109,6 @@ class FileMetadata(db.Model):
         return str(username + sep + str(date) + sep + blob_key)
 
 
-_preprocessing = None
-
 class AdminPageController(webapp2.RequestHandler):
     """A controller to the admin page.
 
@@ -155,137 +151,133 @@ class AdminPageController(webapp2.RequestHandler):
 
     def post(self):
         """Start map reduce job on selected file."""
-        global _preprocessing
         filekey = self.request.get("filekey")
         blob_key = self.request.get("blobkey")
 
+        Preprocessing.run(blob_key, filekey)
         #_preprocessing = Preprocessing(blob_key)
         #_preprocessing.run()
 
-        pipeline = IndexPipeline(filekey, blob_key)
-
-        pipeline.start()
+#        pipeline = IndexPipeline(filekey, blob_key)
+        #pipeline.start()
         #TODO(Caro): put a loading icon in the index link
 
-
-def get_words(line):
-    """Split a line into list of words."""
-    line = re.sub(r'\W+', ' ', line)
-    line = re.sub(r'[_0-9]+', ' ', line)
-    return set(line.split())
-
-
-_SEP = '++'
-
-def index_map(data):
-    """Index map function.
-
-    Args:
-        data: Refers to a line from the input files. Is actually composed of a
-            tuple (lineinfo, line). This is the return value from the
-            ZipLineInputReader, available in the input readers of mapreduce.
-
-    Yields:
-        The map function must return a string, because that is what the reduce
-        function expects. So, in order to simulate the return of a tuple (word,
-        title), a string in the format {word}_SEP{title} is returned. SEP is a
-        separator constant.
-    """
-    info, line = data
-    title = str(info[1]) #number for now
-    #logging.info(info)
-    #_, file_index, offset = info
-    #title = _preprocessing.get_title(file_index)
-    #character = _preprocessing.get_character(file_index, offset)
-    #logging.info('LINE: %s', line)
-    #logging.info(title)
-    #logging.info(character)
-    for word in get_words(line.lower()):
-        yield (word + _SEP + title, line)
-
-
-def index_reduce(key, values):
-    """Index reduce function.
-
-    Args:
-        key: a string in the format {word}_SEP{work}
-        values: the lines in which {word} appears in {work}
-
-    """
-    keys = key.split(_SEP)
-    word_value = keys[0]
-    work_value = keys[1]
-    word = Word.get_by_id(word_value)
-
-    word_count = len(values)
-    if not word:
-        word = Word(id=word_value, name=word_value, count=word_count)
-    else:
-        word.count += word_count
-    word.put()
-
-    work = Work(parent=word.key, id=work_value, title=work_value)
-
-    char_value = "Dummy Character" # TODO: CHANGE
-    char = Character(parent=work.key, id=char_value, name=char_value)
-
-    for line in values:
-        char.mentions.append(line)
-
-    work.put()
-    char.put()
-
-    yield '%s: %s\n' % (key, list(set(values)))
-
-
-class IndexPipeline(base_handler.PipelineBase):
-    """A pipeline to run Index demo.
-
-    Args:
-        blobkey: blobkey to process as string. Should be a zip archive with
-            text files inside.
-    """
-
-
-    def run(self, filekey, blobkey):
-        """Run the pipeline of the mapreduce job."""
-        output = yield mapreduce_pipeline.MapreducePipeline(
-                'index',
-                'controllers.admin_page.index_map',
-                'controllers.admin_page.index_reduce',
-                'mapreduce.input_readers.BlobstoreZipLineInputReader',
-                'mapreduce.output_writers.BlobstoreOutputWriter',
-                mapper_params={
-                    'input_reader': {
-                        'blob_keys': blobkey,
-                    },
-                },
-                reducer_params={
-                    'output_writer': {
-                        'mime_type': 'text/plain',
-                        'output_sharding': 'input',
-                        'filesystem': 'blobstore',
-                    },
-                },
-                shards=16)
-        yield StoreOutput(filekey, output)
-
-
-class StoreOutput(base_handler.PipelineBase):
-    """A pipeline to store the result of the MapReduce job in the database.
-
-    Args:
-        encoded_key: the DB key corresponding to the metadata of this job
-        output: the blobstore location where the output of the job is stored
-    """
-
-    def run(self, encoded_key, output):
-        """ Store result of map reduce job."""
-        key = db.Key(encoded=encoded_key)
-        meta = FileMetadata.get(key)
-        meta.index_link = output[0]
-        meta.put()
-
+#def get_words(line):
+#    """Split a line into list of words."""
+#    line = re.sub(r'\W+', ' ', line)
+#    line = re.sub(r'[_0-9]+', ' ', line)
+#    return set(line.split())
+#
+#
+#_SEP = '++'
+#
+#def index_map(data):
+#    """Index map function.
+#
+#    Args:
+#        data: Refers to a line from the input files. Is actually composed of a
+#            tuple (lineinfo, line). This is the return value from the
+#            ZipLineInputReader, available in the input readers of mapreduce.
+#
+#    Yields:
+#        The map function must return a string, because that is what the reduce
+#        function expects. So, in order to simulate the return of a tuple (word,
+#        title), a string in the format {word}_SEP{title} is returned. SEP is a
+#        separator constant.
+#    """
+#    info, line = data
+#    title = str(info[1]) #number for now
+#    #logging.info(info)
+#    #_, file_index, offset = info
+#    #title = _preprocessing.get_title(file_index)
+#    #character = _preprocessing.get_character(file_index, offset)
+#    #logging.info('LINE: %s', line)
+#    #logging.info(title)
+#    #logging.info(character)
+#    for word in get_words(line.lower()):
+#        yield (word + _SEP + title, line)
+#
+#
+#def index_reduce(key, values):
+#    """Index reduce function.
+#
+#    Args:
+#        key: a string in the format {word}_SEP{work}
+#        values: the lines in which {word} appears in {work}
+#
+#    """
+#    keys = key.split(_SEP)
+#    word_value = keys[0]
+#    work_value = keys[1]
+#    word = Word.get_by_id(word_value)
+#
+#    word_count = len(values)
+#    if not word:
+#        word = Word(id=word_value, name=word_value, count=word_count)
+#    else:
+#        word.count += word_count
+#    word.put()
+#    
+#    work = Work(parent=word.key, id=work_value, title=work_value)
+#
+#    char_value = "Dummy Character" # TODO: CHANGE
+#    char = Character(parent=work.key, id=char_value, name=char_value)
+#    
+#    for line in values:
+#        char.mentions.append(line)
+#    
+#    work.put()
+#    char.put()
+#
+#    yield '%s: %s\n' % (key, list(set(values)))
+#
+#
+#class IndexPipeline(base_handler.PipelineBase):
+#    """A pipeline to run Index.
+#
+#    Args:
+#        blobkey: blobkey to process as string. Should be a zip archive with
+#            text files inside.
+#    """
+#    def run(self, filekey, blobkey):
+#        """Run the pipeline of the mapreduce job."""
+#        output = yield mapreduce_pipeline.MapreducePipeline(
+#                'index',
+#                'controllers.admin_page.index_map',
+#                'controllers.admin_page.index_reduce',
+#                'mapreduce.input_readers.BlobstoreZipLineInputReader',
+#                'mapreduce.output_writers.BlobstoreOutputWriter',
+#                mapper_params={
+#                    'input_reader': {
+#                        'blob_keys': blobkey,
+#                    },
+#                },
+#                reducer_params={
+#                    'output_writer': {
+#                        'mime_type': 'text/plain',
+#                        'output_sharding': 'input',
+#                        'filesystem': 'blobstore',
+#                    },
+#                },
+#                shards=16)
+#        yield StoreOutput(filekey, output)
+#
+#
+#class StoreOutput(base_handler.PipelineBase):
+#    """A pipeline to store the result of the MapReduce job in the database.
+#
+#    Args:
+#        encoded_key: the DB key corresponding to the metadata of this job
+#        output: the blobstore location where the output of the job is stored
+#    """
+#
+#    def run(self, encoded_key, output):
+#        """ Store result of map reduce job."""
+#        key = db.Key(encoded=encoded_key)
+#        meta = FileMetadata.get(key)
+#        meta.index_link = output[0]
+#        meta.put()
+#
 
 class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
     """Handler to upload data to blobstore."""
