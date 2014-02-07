@@ -59,28 +59,32 @@
          {% if number_results > 0 %}
          <div id="treemap" class="col-md-8" style="height: 500px;"></div>
          {% endif %}
-         <div class="col-md-8 ">
-            <div id="results">
-               {% if work_mentions %}
-                  {% for work, lines in work_mentions.items() %}
-                  <div class="result-item">
-                     <div class="title text-danger">{{ work }}</div>
-                     <i>
-                        {% for line in lines %}
-                        <p class="result-line">{{ line|safe }}</p>
+            <ul class="nav nav-tabs">
+               <li class="active"><a href="#">Results</a>
+                  <div id="results" class="col-md-8 ">
+                     {% if work_mentions %}
+                        {% for work, lines in work_mentions.items() %}
+                        <div class="result-item">
+                           <div class="title text-danger">{{ work }}</div>
+                           <i>
+                              {% for line in lines %}
+                              <p class="result-line">{{ line|safe }}</p>
+                              {% endfor %}
+                           </i>
+                        </div>
                         {% endfor %}
-                     </i>
+                     {% else %}
+                        <p>No results found for <i>{{ searched_word }}</i> </p>
+                     {% endif %}
                   </div>
-                  {% endfor %}
-               {% else %}
-                  <p>No results found for <i>{{ searched_word }}</i> </p>
-               {% endif %}
-            </div>
+                  <div class="col-md-4 box">
+                     <h3>{{ searched_word }}'s definition:</h3>
+                     <p id='definition'><i id='loading_message'>Loading...</i></p>
+                  </div>
+                  </div>
+               </li>
+               <li><a href="#">Visualization</a></li>
+            </ul>
          </div>
-         <div class="col-md-4 box">
-            <h3>{{ searched_word }}'s definition:</h3>
-            <p id='definition'><i id='loading_message'>Loading...</i></p>
-         </div>
-      </div>
    </body>
 </html>
