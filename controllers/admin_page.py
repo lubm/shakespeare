@@ -36,10 +36,6 @@ import jinja2
 import re
 import webapp2
 
-# In order to allow the third party modules to be visible within themselves, it
-# is required to add the third party path to sys.path
-#from third_party import add_third_party_path
-#add_third_party_path()
 
 from google.appengine.ext import blobstore
 from google.appengine.ext import db
@@ -51,6 +47,7 @@ from models.character import Character
 from models.word import Word
 from models.work import Work
 from auxiliary.preprocessing import Preprocessing
+from auxiliary.preprocessing import FileMetadata
 from resources.constants import Constants
 
 class Parent(db.Model):
@@ -65,53 +62,6 @@ class Parent(db.Model):
 
 
 _PARENT = Parent(key_name='parent')
-
-
-class FileMetadata(db.Model):
-    """A helper class that will hold metadata for the user's blobs.
-
-    Specifially, we want to keep track of who uploaded it, where they uploaded
-    it from (right now they can only upload from their computer, but in the
-    future urlfetch would be nice to add), and links to the results of their MR
-    jobs. To enable our querying to scan over our input data, we store keys in
-    the form 'user/date/blob_key', where 'user' is the given user's e-mail
-    address, 'date' is the date and time that they uploaded the item on, and
-    'blob_key' indicates the location in the Blobstore that the item can be
-    found at. '/' is not the actual separator between these values - we use '..'
-    since it is an illegal set of characters for an e-mail address to contain.
-    """
-
-    __SEP = '..'
-    __NEXT = './'
-
-    owner = db.UserProperty()
-    filename = db.StringProperty()
-    uploaded_on = db.DateTimeProperty()
-    source = db.StringProperty()
-    blobkey = db.StringProperty()
-    index_link = db.StringProperty()
-
-
-    @staticmethod
-    def get_key_name(username, date, blob_key):
-        """Returns the internal key for a particular item in the database.
-
-        Our items are stored with keys of the form 'user/date/blob_key' ('/' is
-        not the real separator, but __SEP is).
-
-        Args:
-            username: The given user's e-mail address.
-            date: A datetime object representing the date and time that an input
-                file was uploaded to this app.
-            blob_key: The blob key corresponding to the location of the input
-                file in the Blobstore.
-        Returns:
-            The internal key for the item specified by
-                (username, date, blob_key).
-        """
-
-        sep = FileMetadata.__SEP
-        return str(username + sep + str(date) + sep + blob_key)
 
 
 class AdminPageController(webapp2.RequestHandler):
@@ -167,122 +117,6 @@ class AdminPageController(webapp2.RequestHandler):
         #pipeline.start()
         #TODO(Caro): put a loading icon in the index link
 
-#def get_words(line):
-#    """Split a line into list of words."""
-#    line = re.sub(r'\W+', ' ', line)
-#    line = re.sub(r'[_0-9]+', ' ', line)
-#    return set(line.split())
-#
-#
-#_SEP = '++'
-#
-#def index_map(data):
-#    """Index map function.
-#
-#    Args:
-#        data: Refers to a line from the input files. Is actually composed of a
-#            tuple (lineinfo, line). This is the return value from the
-#            ZipLineInputReader, available in the input readers of mapreduce.
-#
-#    Yields:
-#        The map function must return a string, because that is what the reduce
-#        function expects. So, in order to simulate the return of a tuple (word,
-#        title), a string in the format {word}_SEP{title} is returned. SEP is a
-#        separator constant.
-#    """
-#    info, line = data
-#    title = str(info[1]) #number for now
-#    #logging.info(info)
-#    #_, file_index, offset = info
-#    #title = _preprocessing.get_title(file_index)
-#    #character = _preprocessing.get_character(file_index, offset)
-#    #logging.info('LINE: %s', line)
-#    #logging.info(title)
-#    #logging.info(character)
-#    for word in get_words(line.lower()):
-#        yield (word + _SEP + title, line)
-#
-#
-#def index_reduce(key, values):
-#    """Index reduce function.
-#
-#    Args:
-#        key: a string in the format {word}_SEP{work}
-#        values: the lines in which {word} appears in {work}
-#
-#    """
-#    keys = key.split(_SEP)
-#    word_value = keys[0]
-#    work_value = keys[1]
-#    word = Word.get_by_id(word_value)
-#
-#    word_count = len(values)
-#    if not word:
-#        word = Word(id=word_value, name=word_value, count=word_count)
-#    else:
-#        word.count += word_count
-#    word.put()
-#    
-#    work = Work(parent=word.key, id=work_value, title=work_value)
-#
-#    char_value = "Dummy Character" # TODO: CHANGE
-#    char = Character(parent=work.key, id=char_value, name=char_value)
-#    
-#    for line in values:
-#        char.mentions.append(line)
-#    
-#    work.put()
-#    char.put()
-#
-#    yield '%s: %s\n' % (key, list(set(values)))
-#
-#
-#class IndexPipeline(base_handler.PipelineBase):
-#    """A pipeline to run Index.
-#
-#    Args:
-#        blobkey: blobkey to process as string. Should be a zip archive with
-#            text files inside.
-#    """
-#    def run(self, filekey, blobkey):
-#        """Run the pipeline of the mapreduce job."""
-#        output = yield mapreduce_pipeline.MapreducePipeline(
-#                'index',
-#                'controllers.admin_page.index_map',
-#                'controllers.admin_page.index_reduce',
-#                'mapreduce.input_readers.BlobstoreZipLineInputReader',
-#                'mapreduce.output_writers.BlobstoreOutputWriter',
-#                mapper_params={
-#                    'input_reader': {
-#                        'blob_keys': blobkey,
-#                    },
-#                },
-#                reducer_params={
-#                    'output_writer': {
-#                        'mime_type': 'text/plain',
-#                        'output_sharding': 'input',
-#                        'filesystem': 'blobstore',
-#                    },
-#                },
-#                shards=16)
-#        yield StoreOutput(filekey, output)
-#
-#
-#class StoreOutput(base_handler.PipelineBase):
-#    """A pipeline to store the result of the MapReduce job in the database.
-#
-#    Args:
-#        encoded_key: the DB key corresponding to the metadata of this job
-#        output: the blobstore location where the output of the job is stored
-#    """
-#
-#    def run(self, encoded_key, output):
-#        """ Store result of map reduce job."""
-#        key = db.Key(encoded=encoded_key)
-#        meta = FileMetadata.get(key)
-#        meta.index_link = output[0]
-#        meta.put()
-#
 
 class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
     """Handler to upload data to blobstore."""
