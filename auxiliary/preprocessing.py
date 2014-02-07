@@ -100,6 +100,7 @@ class Preprocessing(object):
     pos_to_character_dicts = {}
     ind_to_title = {}
     filename_to_ind = {}
+    ind_to_sorted_offsets = {}
 
     @classmethod
     def get_title(cls, index):
@@ -133,12 +134,12 @@ class Preprocessing(object):
                                          index)
         pos_to_char = cls.pos_to_character_dicts[index]
         #Find closest smaller offset in which a character starts a speak
-        sorted_keys = sorted(pos_to_char.keys())
+        sorted_keys = cls.ind_to_sorted_offsets[index]
         aux = bisect.bisect(sorted_keys, offset)
         closest_offset = sorted_keys[aux - 1]
         if closest_offset >= 0:
             return pos_to_char[closest_offset]
-        return 'META'
+        return 'EPILOG'
 
     @staticmethod
     def titlecase(title):
@@ -242,10 +243,11 @@ class Preprocessing(object):
         pos_to_char_dict = {}
         for value in values:
             split = value.split(_SEP)
-            offset = split[0]
-            character = split[1]
+            offset, character = split
             pos_to_char_dict[int(offset)] = character
         Preprocessing.pos_to_character_dicts[int(key)] = pos_to_char_dict
+        Preprocessing.ind_to_sorted_offsets[int(key)] = sorted(
+            pos_to_char_dict.keys()) 
 
     @classmethod
     def build_name_to_ind(cls, blobkey):
@@ -285,6 +287,7 @@ class Preprocessing(object):
         cls.pos_to_character_dicts = {}
         cls.ind_to_title = {}
         cls.filename_to_ind = {}
+        cls.ind_to_sorted_offsets = {}
         cls.build_name_to_ind(blobkey)
         pipeline =  PrePipeline(blobkey, filekey)
         pipeline.start()
@@ -349,7 +352,6 @@ def index_map(data):
         separator constant.
     """
     info, line = data
-    logging.info(info)
     _, file_index, offset = info
     title = Preprocessing.get_title(file_index)
     character = Preprocessing.get_character(file_index, offset)
