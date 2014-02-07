@@ -13,10 +13,17 @@ Extensions:
 	- Did you mean
 		Suggest an existing word in the database if the user misspelled
 		something. For this it chooses the word at distance 1 that appears the
-		most in the shakespeare's works.
-
-Extra: There is an easter egg in our home page :P
-
+		most in  shakespeare's works.
+	- Visualization
+		We show a treemap of the results. The size of a block is proportional to
+		the number of occurences of the searched word in the respective work.
+		For now we are displaying numbers instead of work's titles because we
+		are changing something in our database model. 
+	- Easter Egg
+		If you enter the konami code (up up down down left right left right a b)
+		in the homepage an alert will appear.
+	- We are still working in enabling the user to search by character. We
+		needed to change the database model for this. 
 
 **************************      INPUT FORMAT      **************************
 
@@ -28,7 +35,7 @@ first non-empty line of each text file is regarded as the work's title.
 We are using the nose-gae framework to run our tests 
 Url: https://code.google.com/p/nose-gae/
 
-This is one of the recomended framekorks in the AppEngine docs for local unit
+This is one of the recommended framekorks in the AppEngine docs for local unit
 testing.
 
 For installing noseGAE:
@@ -38,12 +45,8 @@ $ sudo easy_install NoseGAE
 
 To run the tests, execute this in the app directory.
 
-$ nosetests --with-gae {test_file_name.py} 
+$ nosetests --with-gae --without-sandbox tests/
 
-IMPORTANT: because of a known GAE issue 
-(https://code.google.com/p/nose-gae/issues/detail?id=60)
-the tests in the datastore_test.py file should be runned with this additional
-parameter --without-sandbox.
 
 
 
