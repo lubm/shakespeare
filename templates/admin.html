@@ -15,7 +15,8 @@
     <ul>
       {% for item in indexed_items %}
       <li>
-        {{ item.filename }}: <a href="{{ item.index_link }}">index</a>
+        <a href="/blobstore/{{ item.blobkey }}">{{ item.filename }}</a>:
+        <a href="{{ item.index_link }}">index</a>
       </li>
       {% endfor %}
     </ul>
@@ -29,7 +30,7 @@
         <div>
           <input type="radio" onclick="updateForm('{{ item.key() }}', '{{
             item.blobkey }}', '{{ item.filename }}');" name="uploaded_file"/> 
-          {{ item.filename }}
+            <a href="/blobstore/{{ item.blobkey }}">{{ item.filename }}</a>
         </div>
         {% endfor %}
         <input type="hidden" name="jobName" id="jobName" value=""/>

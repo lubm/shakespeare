@@ -4,10 +4,66 @@
 import logging
 import re
 import zipfile
+import bisect
 
 from google.appengine.ext import blobstore
+from google.appengine.ext import db
+from google.appengine.ext import ndb
+from google.appengine.api import users
+from google.appengine.ext.webapp import blobstore_handlers
 from mapreduce import base_handler
 from mapreduce import mapreduce_pipeline
+
+from models.character import Character
+from models.word import Word
+from models.work import Work
+
+class FileMetadata(db.Model):
+    """A helper class that will hold metadata for the user's blobs.
+
+    Specifially, we want to keep track of who uploaded it, where they uploaded
+    it from (right now they can only upload from their computer, but in the
+    future urlfetch would be nice to add), and links to the results of their MR
+    jobs. To enable our querying to scan over our input data, we store keys in
+    the form 'user/date/blob_key', where 'user' is the given user's e-mail
+    address, 'date' is the date and time that they uploaded the item on, and
+    'blob_key' indicates the location in the Blobstore that the item can be
+    found at. '/' is not the actual separator between these values - we use '..'
+    since it is an illegal set of characters for an e-mail address to contain.
+    """
+
+    __SEP = '..'
+    __NEXT = './'
+
+    owner = db.UserProperty()
+    filename = db.StringProperty()
+    uploaded_on = db.DateTimeProperty()
+    source = db.StringProperty()
+    blobkey = db.StringProperty()
+    index_link = db.StringProperty()
+
+
+    @staticmethod
+    def get_key_name(username, date, blob_key):
+        """Returns the internal key for a particular item in the database.
+
+        Our items are stored with keys of the form 'user/date/blob_key' ('/' is
+        not the real separator, but __SEP is).
+
+        Args:
+            username: The given user's e-mail address.
+            date: A datetime object representing the date and time that an input
+                file was uploaded to this app.
+            blob_key: The blob key corresponding to the location of the input
+                file in the Blobstore.
+        Returns:
+            The internal key for the item specified by
+                (username, date, blob_key).
+        """
+
+        sep = FileMetadata.__SEP
+        return str(username + sep + str(date) + sep + blob_key)
+
 
 
 class FileIndexTooLargeError(Exception):
@@ -79,8 +135,12 @@ class Preprocessing(object):
                                          index)
         pos_to_char = cls.pos_to_character_dicts[index]
         #Find closest smaller offset in which a character starts a speak
-        closest_offset = bisect.bisect(sorted(pos_to_char.keys()))
-        return pos_to_char[offset]
+        sorted_keys = sorted(pos_to_char.keys())
+        aux = bisect.bisect(sorted_keys, offset)
+        closest_offset = sorted_keys[aux - 1]
+        if closest_offset >= 0:
+            return pos_to_char[closest_offset]
+        return 'META'
 
     @staticmethod
     def titlecase(title):
@@ -160,19 +220,12 @@ class Preprocessing(object):
         zipinfo, text_fn = data
         filename = zipinfo.filename
         ind = Preprocessing.get_index(filename)
-        print '********************************'
-        print ind
-        print '********************************'
         text = text_fn()
         title = Preprocessing.find_title(text)
-        print title
         Preprocessing.ind_to_title[ind] = Preprocessing.titlecase(title)
-        print Preprocessing.ind_to_title[ind]
         offset = Preprocessing.get_epilog_len(text, title)
-        print offset
         body = text[offset:]
         offset_to_char = Preprocessing.get_speaks_offsets(body)
-        print offset_to_char
         for key in offset_to_char:
             yield ind, str(key) + _SEP + offset_to_char[key]
 
@@ -188,15 +241,12 @@ class Preprocessing(object):
             values: A list containing elements of the type
                 <offset>_SEP<character>
         """
-        print '*REDUCE*******************************'
-        print key
-        print '********************************'
         pos_to_char_dict = {}
         for value in values:
             split = value.split(_SEP)
             offset = split[0]
             character = split[1]
-            pos_to_char_dict[offset] = character
+            pos_to_char_dict[int(offset)] = character
         Preprocessing.pos_to_character_dicts[int(key)] = pos_to_char_dict
 
     @classmethod
@@ -270,14 +320,11 @@ class PrePipeline(base_handler.PipelineBase):
 
     def finalized(self):
         logging.info('Preprocessing finished succesfully')
-        print Preprocessing.pos_to_character_dicts
-        print '**************************'
-        print Preprocessing.ind_to_title
-        print '**************************'
-        print Preprocessing.filename_to_ind
-        print '**************************'
-        #pipeline = IndexPipeline(self.filekey, self.blobkey)
-        #pipeline.start()
+        logging.debug(str(Preprocessing.pos_to_character_dicts))
+        logging.debug(str(Preprocessing.ind_to_title))
+        logging.debug(str(Preprocessing.filename_to_ind))
+        pipeline = IndexPipeline(self.filekey, self.blobkey)
+        pipeline.start()
 
 
 def get_words(line):
@@ -306,12 +353,11 @@ def index_map(data):
     info, line = data
     logging.info(info)
     _, file_index, offset = info
-    print Preprocessing.ind_to_title
     title = Preprocessing.get_title(file_index)
     character = Preprocessing.get_character(file_index, offset)
-    logging.info('LINE: %s', line)
-    logging.info(title)
-    logging.info(character)
+    logging.debug('LINE: %s', line)
+    logging.debug(title)
+    logging.debug(character)
     for word in get_words(line.lower()):
         yield (word + _SEP + title + _SEP + character, line)
 
@@ -325,15 +371,13 @@ def index_reduce(key, values):
 
     """
     keys = key.split(_SEP)
-    word_value = keys[0]
-    work_value = keys[1]
+    word_value, work_value, char_value = keys
     word = Word.get_by_id(word_value)
     if not word:
         word = Word(id=word_value, name=word_value)
     
     work = Work(parent=word.key, id=work_value, title=work_value)
 
-    char_value = "Dummy Character" # TODO: CHANGE
     char = Character(parent=work.key, id=char_value, name=char_value)
     
     for line in values:
