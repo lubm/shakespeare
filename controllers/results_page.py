@@ -6,6 +6,7 @@ import time
 from webapp2_extras import json
 
 import auxiliary.formatter as formatter
+
 from models.character import Character
 from models.word import Word
 from models.work import Work
@@ -69,6 +70,30 @@ def get_work_mentions_of_word_name(word_name):
     return work_mentions
 
 
+def get_hierarchical_mentions(word_name):
+    """Get all the mentions of a certain word string representation accessed
+       first by work and then by character.
+
+    Args:
+        word_name: the string representation of the word.
+
+    Returns:
+        A dictionary of dictionaries, being the first key the work title and the
+        second, the character name.
+    """
+    hierarchical_mentions = {}
+    word = Word.get_by_id(word_name)
+    if word:
+        works = Work.query(ancestor=word.key)
+        for work in works:
+            work_chars = Character.query(ancestor=work.key)
+            hierarchical_mentions[work.title] = {}
+            for char in work_chars:
+                hierarchical_mentions[work.title][char.name] =\
+                    bold_mentions(word.name, char.mentions)
+    return hierarchical_mentions
+
+
 class ResultsPageController(webapp2.RequestHandler):
     """Class for rendering search results"""
 
@@ -100,19 +125,37 @@ class TreemapHandler(webapp2.RequestHandler):
     """Class for retrieving data for the visualization"""
 
     def get(self):
-        """Retrieves formatted information to the treemap visualization"""
+        """Retrieves formatted information to the treemap visualization. It
+           expects a list of elements, and each element is a list of the 
+           following type:
+           
+           [name, parent's name, value, color value]
+
+           In which name and parent's name are strings, value is an integer
+           proportional to the size of the resulting rectangle on the treemap
+           and color value is the value to be used as color acording to the
+           color range.
+
+           It is called the function get_hierarchical_mentions to obtain a
+           dictionary that maps from work and character to mentions.
+        """
         searched_value = self.request.get('searched_word')
         value = searched_value.lower() if searched_value else ''
 
         if value:
-            work_mentions = get_work_mentions_of_word_name(cgi.escape(value))
+            hierarchical_mentions = get_hierarchical_mentions(cgi.escape(value))
 
-            treemap_data = [['Location', 'Parent', 'Word Occurrences'],
-                          ['Shakespeare\'s Corpus', None, 0]]
+            treemap_data = [['Location', 'Parent', 'Word Occurrences', 'Color'],
+                ['Shakespeare\'s Corpus', None, 0, 0]]
 
-            for title in work_mentions:
-                treemap_data.append([title, 'Shakespeare\'s Corpus',
-                    len(work_mentions[title])])
+            for work in hierarchical_mentions:
+                treemap_data.append([work, 'Shakespeare\'s Corpus',
+                    count_dict_values(hierarchical_mentions[work]),
+                    count_dict_values(hierarchical_mentions[work])])
+                for char in hierarchical_mentions[work]:
+                    treemap_data.append([char, work,
+                        len(hierarchical_mentions[work][char]),
+                        len(hierarchical_mentions[work][char])])
 
             self.response.headers['Content-Type'] = 'text/json'
             self.response.out.write(json.encode({"array": treemap_data}))
