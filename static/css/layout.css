@@ -11,6 +11,63 @@
   box-shadow: 0 1px 4px rgba(0,0,0,0.2);
 }
 
+#navigation-bar {
+  margin-bottom: 0px;
+  padding: 10px 10px 0px 10px;
+
+}
+
+#separator {
+  margin: 10px 10px 0px 10px;
+}
+
+#navigation-bar li {
+  display: inline;
+  text-decoration: none;
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+#navigation-bar li a {
+  color: gray;
+  cursor: pointer;
+  padding-bottom: 10px;
+}
+
+#navigation-bar li a:hover{
+  text-decoration: none;
+  color: black;
+}
+
+#navigation-bar li.active a {
+  border-bottom: 3px solid #dd4b39;
+  color: #dd4b39;
+  font-weight: bold;
+}
+
+#treemap {
+  height: 500px;
+}
+
+#shakespeare-image {
+  display: block;
+  position: absolute; 
+  bottom: 0px; 
+  right: 0px
+}
+
+#word-definition {
+  margin-top: 25px;
+}
+
+#cs-academy{
+  position: absolute; 
+  bottom: 200px; 
+  right: 400px;
+  font-size: 72px;
+  font-family: "Apple Chancery", "Zapf Chancery", cursive;
+}
+
 .stats {
   color: grey;
 }
@@ -42,8 +99,8 @@
 .block:before {
   content: '';
   display: inline-block;
-  height: 100%;
   vertical-align: middle;
+  height: 100%;
   margin-right: -0.25em; /* Adjusts for spacing */
 }
 
