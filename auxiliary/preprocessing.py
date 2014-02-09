@@ -24,8 +24,10 @@ from models.line import Line
 class FileIndexTooLargeError(Exception):
     """To be raised when a file index that does not exist is requested."""
     def __init__(self, num_files, index_requested):
+
         self.num_files = num_files
         self.ind_requested = index_requested
+        Exception.__init__(self, self.__repr__())
 
     def __str__(self):
         return '''Preprocessing only identified %d files in zipfile and %d file
@@ -341,12 +343,13 @@ def index_map(data):
     ind_to_sorted_offsets = params['metadata']['ind_to_sorted_offsets']
     character = Preprocessing.get_character(char_maps, ind_to_sorted_offsets,
             file_index, offset)
+    character_titlecase = Preprocessing.titlecase(character)
     #print title
     #print character
     line_db = Line(line=line)
     line_id = line_db.put()
     for word in get_words(line.lower()):
-        yield (word + _SEP + title + _SEP + character, line_id)
+        yield (word + _SEP + title + _SEP + character_titlecase, line_id)
 
 
 def index_reduce(key, values):

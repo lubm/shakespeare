@@ -36,7 +36,6 @@ import jinja2
 import re
 import webapp2
 
-
 from google.appengine.ext import blobstore
 from google.appengine.ext import db
 from google.appengine.ext import ndb
@@ -69,7 +68,7 @@ class AdminPageController(webapp2.RequestHandler):
 
     It handles the upload of works to the database. The map-reduce job is
     triggered on this page also.
-    
+
     """
 
     template_env = jinja2.Environment(
@@ -84,7 +83,7 @@ class AdminPageController(webapp2.RequestHandler):
 
         items = [result for result in results_query]
         indexed_items = []
-        uploaded_items =[]
+        uploaded_items = []
         for item in items:
             if item.index_link:
                 indexed_items.append(item)
@@ -110,12 +109,6 @@ class AdminPageController(webapp2.RequestHandler):
         blob_key = self.request.get("blobkey")
 
         Preprocessing.run(blob_key, filekey)
-        #_preprocessing = Preprocessing(blob_key)
-        #_preprocessing.run()
-
-#        pipeline = IndexPipeline(filekey, blob_key)
-        #pipeline.start()
-        #TODO(Caro): put a loading icon in the index link
 
 
 class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
@@ -163,7 +156,6 @@ class ClearDatastoreHandler(webapp2.RequestHandler):
 
     def get(self):
         """Clears the datastore."""
-        #db.delete(db.Query(keys_only=True))
         ndb.delete_multi(Word.query().fetch(keys_only=True))
         ndb.delete_multi(Work.query().fetch(keys_only=True))
         ndb.delete_multi(Character.query().fetch(keys_only=True))
