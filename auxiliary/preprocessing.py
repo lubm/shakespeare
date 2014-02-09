@@ -255,7 +255,7 @@ class Preprocessing(object):
             print '++++++++++++++++++++++++++++++++'
             print index
             print key
-        Preprocessing.ind_to_title[int(index)] = title
+        Preprocessing.ind_to_title[int(index)] = Preprocessing.titlecase(title)
         for value in values:
             split = value.split(_SEP)
             offset, character = split
