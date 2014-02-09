@@ -43,6 +43,7 @@ from google.appengine.api import users
 from google.appengine.ext.webapp import blobstore_handlers
 
 from models.character import Character
+from models.line import Line
 from models.word import Word
 from models.work import Work
 from auxiliary.preprocessing import Preprocessing
@@ -159,6 +160,6 @@ class ClearDatastoreHandler(webapp2.RequestHandler):
         ndb.delete_multi(Word.query().fetch(keys_only=True))
         ndb.delete_multi(Work.query().fetch(keys_only=True))
         ndb.delete_multi(Character.query().fetch(keys_only=True))
-        ndb.delete_multi(Mention.query().fetch(keys_only=True))
+        ndb.delete_multi(Line.query().fetch(keys_only=True))
         db.delete(FileMetadata.all(keys_only=True).run())
         self.redirect('/admin')

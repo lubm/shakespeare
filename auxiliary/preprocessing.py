@@ -4,6 +4,7 @@ import logging
 import re
 import zipfile
 import bisect
+import pickle
 
 from google.appengine.ext import blobstore
 from google.appengine.ext import db
@@ -346,9 +347,9 @@ def index_map(data):
     #print title
     #print character
     line_db = Line(line=line)
-    line_id = line_db.put()
+    line_key = line_db.put()
     for word in get_words(line.lower()):
-        yield (word + _SEP + title + _SEP + character, line_id)
+        yield (word + _SEP + title + _SEP + character, pickle.dumps(line_key))
 
 
 def index_reduce(key, values):
@@ -372,8 +373,8 @@ def index_reduce(key, values):
     char = Character(parent=work.key, id=character_titlecase, 
         name=character_titlecase)
     
-    for line_id in values:
-        char.mentions.append(line_id)
+    for line in values:
+        char.mentions.append(pickle.loads(line))
     
     word.put()
     work.put()
