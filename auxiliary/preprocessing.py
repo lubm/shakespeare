@@ -87,16 +87,19 @@ class Preprocessing(object):
             character: a string with the name of the character or empty string
                 if the line is not pronounced by any character
         """
+
         if index >= len(char_maps):
             raise FileIndexTooLargeError(len(char_maps),
                                          index)
         pos_to_char = char_maps[str(index)]
         #Find closest smaller offset in which a character starts a speak
         sorted_keys = ind_to_sorted_offsets[str(index)]
-        aux = bisect.bisect(sorted_keys, offset)
-        closest_offset = sorted_keys[aux - 1]
-        if closest_offset >= 0:
+        aux = bisect.bisect(sorted_keys, offset) - 1
+
+        if aux >= 0:
+            closest_offset = sorted_keys[aux]
             return pos_to_char[str(closest_offset)]
+
         return 'EPILOG'
 
     @staticmethod
