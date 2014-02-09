@@ -255,7 +255,7 @@ class Preprocessing(object):
             print '++++++++++++++++++++++++++++++++'
             print index
             print key
-        Preprocessing.ind_to_title[int(index)] = Preprocessing.titlecase(title)
+        Preprocessing.ind_to_title[int(index)] = title
         for value in values:
             split = value.split(_SEP)
             offset, character = split
@@ -389,11 +389,10 @@ def index_map(data):
     ind_to_sorted_offsets = params['metadata']['ind_to_sorted_offsets']
     character = Preprocessing.get_character(char_maps, ind_to_sorted_offsets,
             file_index, offset)
-    character_titlecase = Preprocessing.titlecase(character)
     #print title
     #print character
     for word in get_words(line.lower()):
-        yield (word + _SEP + title + _SEP + character_titlecase, line)
+        yield (word + _SEP + title + _SEP + character, line)
 
 
 def index_reduce(key, values):
@@ -410,9 +409,12 @@ def index_reduce(key, values):
     if not word:
         word = Word(id=word_value, name=word_value)
     
-    work = Work(parent=word.key, id=work_value, title=work_value)
+    work_titlecase = Preprocessing.titlecase(work_value)
+    work = Work(parent=word.key, id=work_titlecase, title=work_titlecase)
 
-    char = Character(parent=work.key, id=char_value, name=char_value)
+    character_titlecase = Preprocessing.titlecase(char_value)
+    char = Character(parent=work.key, id=character_titlecase, 
+        name=character_titlecase)
     
     for line in values:
         char.mentions.append(line)
