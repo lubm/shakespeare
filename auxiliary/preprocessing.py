@@ -12,6 +12,7 @@ from google.appengine.ext import ndb
 from google.appengine.api import users
 from google.appengine.ext.webapp import blobstore_handlers
 from mapreduce import base_handler
+from mapreduce import context
 from mapreduce import mapreduce_pipeline
 
 from models.character import Character
@@ -118,7 +119,7 @@ class Preprocessing(object):
         return cls.ind_to_title[index]
 
     @classmethod
-    def get_character(cls, index, offset):
+    def get_character(cls, char_maps, ind_to_sorted_offsets, index, offset):
         """Get character relative to a line.
 
         Args:
@@ -129,16 +130,16 @@ class Preprocessing(object):
             character: a string with the name of the character or empty string
                 if the line is not pronounced by any character
         """
-        if index >= len(cls.pos_to_character_dicts):
-            raise FileIndexTooLargeError(len(cls.pos_to_character_dicts),
+        if index >= len(char_maps):
+            raise FileIndexTooLargeError(len(char_maps),
                                          index)
-        pos_to_char = cls.pos_to_character_dicts[index]
+        pos_to_char = char_maps[str(index)]
         #Find closest smaller offset in which a character starts a speak
-        sorted_keys = cls.ind_to_sorted_offsets[index]
+        sorted_keys = ind_to_sorted_offsets[str(index)]
         aux = bisect.bisect(sorted_keys, offset)
         closest_offset = sorted_keys[aux - 1]
         if closest_offset >= 0:
-            return pos_to_char[closest_offset]
+            return pos_to_char[str(closest_offset)]
         return 'EPILOG'
 
     @staticmethod
@@ -160,7 +161,7 @@ class Preprocessing(object):
     @staticmethod
     def find_title(text):
         """Get first non-empty line of a text."""
-        title_reg = re.compile(r'\t([A-Z]+.*[A-Z])\s*\n')
+        title_reg = re.compile(r'\t([A-Z0-9]+.*[A-Z])\s*\n')
         title = re.search(title_reg, text).group(1)
         return title
 
@@ -196,6 +197,8 @@ class Preprocessing(object):
         epilog_reg = re.compile(r'.*?\t' + title + '.*?\t' + title + '\s*\n', 
 			flags=re.DOTALL)
         result = re.match(epilog_reg, text)
+        if result == None:
+            return None
         epilog_len = result.span()[1]
         return epilog_len
 
@@ -221,12 +224,14 @@ class Preprocessing(object):
         ind = Preprocessing.get_index(filename)
         text = text_fn()
         title = Preprocessing.find_title(text)
-        Preprocessing.ind_to_title[ind] = Preprocessing.titlecase(title)
         offset = Preprocessing.get_epilog_len(text, title)
-        body = text[offset:]
-        offset_to_char = Preprocessing.get_speaks_offsets(body)
-        for key in offset_to_char:
-            yield ind, str(key) + _SEP + offset_to_char[key]
+        if offset == None:
+            yield str(ind) + _SEP + title, '0' + _SEP + 'None'
+        else:
+            body = text[offset:]
+            offset_to_char = Preprocessing.get_speaks_offsets(body)
+            for key in offset_to_char:
+                yield str(ind) + _SEP + title, str(key) + _SEP + offset_to_char[key]
 
     @staticmethod
     def preprocessing_reduce(key, values):
@@ -241,17 +246,19 @@ class Preprocessing(object):
                 <offset>_SEP<character>
         """
         pos_to_char_dict = {}
+        index, title = key.split(_SEP)
+        Preprocessing.ind_to_title[int(index)] = title
         for value in values:
             split = value.split(_SEP)
             offset, character = split
             pos_to_char_dict[int(offset)] = character
-        Preprocessing.pos_to_character_dicts[int(key)] = pos_to_char_dict
-        Preprocessing.ind_to_sorted_offsets[int(key)] = sorted(
-            pos_to_char_dict.keys()) 
+        Preprocessing.pos_to_character_dicts[int(index)] = pos_to_char_dict
+        Preprocessing.ind_to_sorted_offsets[int(index)] = \
+            sorted(pos_to_char_dict.keys())
 
     @classmethod
     def build_name_to_ind(cls, blobkey):
-        """Build a dictionary that maps filename to index.
+        """Build a dictionary that maps filename to index#.
 
         The dictionary maps the the name of each file inside the zipfile being
         processed to its relative position inside the zipfile.
@@ -272,10 +279,13 @@ class Preprocessing(object):
             filename: A string containing the name of a file in the zipfile
             being processed.            
         """
-        if filename in cls.filename_to_ind:
-            return cls.filename_to_ind[filename]
-        #TODO(izabela): raise exception
-        return ''
+        ctx = context.get()
+        filename_to_ind = \
+            ctx.mapreduce_spec.mapper.params[u'metadata'][u'filename_to_ind'] 
+        if filename in filename_to_ind:
+            return filename_to_ind[filename]
+        logging.error('PROBLEM: could not find filename in index')
+        return None
 
     @classmethod
     def run(cls, blobkey, filekey):
@@ -289,7 +299,9 @@ class Preprocessing(object):
         cls.filename_to_ind = {}
         cls.ind_to_sorted_offsets = {}
         cls.build_name_to_ind(blobkey)
-        pipeline =  PrePipeline(blobkey, filekey)
+        pipeline =  PrePipeline(blobkey, filekey, Preprocessing.filename_to_ind,
+                Preprocessing.pos_to_character_dicts,
+                Preprocessing.ind_to_sorted_offsets)
         pipeline.start()
     
 
@@ -300,12 +312,15 @@ class PrePipeline(base_handler.PipelineBase):
         blobkey: blobkey to process as string. Should be a zip archive with
             text files inside.
     """
-    def __init__(self, blobkey, filekey):
-        super(PrePipeline, self).__init__(blobkey, filekey)
-        self.blobkey = blobkey
-        self.filekey = filekey
-
-    def run(self, blobkey, filekey):
+    def __init__(self, blobkey, filekey, filename_to_ind, pos_to_char_dicts, 
+            ind_to_sorted_offsets) :
+       super(PrePipeline, self).__init__(blobkey, filekey, filename_to_ind,
+            pos_to_char_dicts, ind_to_sorted_offsets)
+       self.blobkey = blobkey
+       self.filekey = filekey
+ 
+    def run(self, blobkey, filekey, filename_to_ind, pos_to_char_dicts, 
+            ind_to_sorted_offsets):
         """Run the pipeline of the mapreduce job."""
         pipeline = yield mapreduce_pipeline.MapreducePipeline(
                 'preprocessing',
@@ -314,17 +329,23 @@ class PrePipeline(base_handler.PipelineBase):
                 'mapreduce.input_readers.BlobstoreZipInputReader',
                 mapper_params={
                     'input_reader': {
-                        'blob_key': blobkey,
+                        'blob_key': blobkey
                     },
+                    'metadata': {
+                        'filename_to_ind': filename_to_ind,
+                    }
                 },
                 shards=16)
 
     def finalized(self):
         logging.info('Preprocessing finished succesfully')
-        logging.debug(str(Preprocessing.pos_to_character_dicts))
-        logging.debug(str(Preprocessing.ind_to_title))
-        logging.debug(str(Preprocessing.filename_to_ind))
-        pipeline = IndexPipeline(self.filekey, self.blobkey)
+        logging.info(str(Preprocessing.ind_to_title))
+        logging.info(str(Preprocessing.pos_to_character_dicts))
+        logging.info(str(Preprocessing.ind_to_sorted_offsets))
+        pipeline = IndexPipeline(self.filekey, self.blobkey,
+                Preprocessing.ind_to_title,
+                Preprocessing.pos_to_character_dicts,
+                Preprocessing.ind_to_sorted_offsets)
         pipeline.start()
 
 
@@ -353,11 +374,15 @@ def index_map(data):
     """
     info, line = data
     _, file_index, offset = info
-    title = Preprocessing.get_title(file_index)
-    character = Preprocessing.get_character(file_index, offset)
-    logging.debug('LINE: %s', line)
-    logging.debug(title)
-    logging.debug(character)
+    ctx = context.get()
+    params = ctx.mapreduce_spec.mapper.params
+    title = params['metadata']['ind_to_title'][str(file_index)]
+    char_maps = params['metadata']['pos_to_char_dicts']
+    ind_to_sorted_offsets = params['metadata']['ind_to_sorted_offsets']
+    character = Preprocessing.get_character(char_maps, ind_to_sorted_offsets,
+            file_index, offset)
+    #print title
+    #print character
     for word in get_words(line.lower()):
         yield (word + _SEP + title + _SEP + character, line)
 
@@ -396,7 +421,8 @@ class IndexPipeline(base_handler.PipelineBase):
         blobkey: blobkey to process as string. Should be a zip archive with
             text files inside.
     """
-    def run(self, filekey, blobkey):
+    def run(self, filekey, blobkey, ind_to_title, pos_to_char_dicts,
+            ind_to_sorted_offsets):
         """Run the pipeline of the mapreduce job."""
         output = yield mapreduce_pipeline.MapreducePipeline(
                 'index',
@@ -408,6 +434,11 @@ class IndexPipeline(base_handler.PipelineBase):
                     'input_reader': {
                         'blob_keys': blobkey,
                     },
+                    'metadata': {
+                        'ind_to_title': ind_to_title,
+                        'pos_to_char_dicts': pos_to_char_dicts,
+                        'ind_to_sorted_offsets': ind_to_sorted_offsets
+                    }
                 },
                 reducer_params={
                     'output_writer': {
