@@ -1,5 +1,4 @@
 """ A module to preprocess Shakespeare's works, gathering metadata."""
-#TODO(izabela): treat files that do not follow the pattern
 
 import logging
 import re
@@ -17,55 +16,9 @@ from mapreduce import mapreduce_pipeline
 
 from models.character import Character
 from models.line import Line
+from models.file_metadata import FileMetadata
 from models.word import Word
 from models.work import Work
-
-class FileMetadata(db.Model):
-    """A helper class that will hold metadata for the user's blobs.
-
-    Specifially, we want to keep track of who uploaded it, where they uploaded
-    it from (right now they can only upload from their computer, but in the
-    future urlfetch would be nice to add), and links to the results of their MR
-    jobs. To enable our querying to scan over our input data, we store keys in
-    the form 'user/date/blob_key', where 'user' is the given user's e-mail
-    address, 'date' is the date and time that they uploaded the item on, and
-    'blob_key' indicates the location in the Blobstore that the item can be
-    found at. '/' is not the actual separator between these values - we use '..'
-    since it is an illegal set of characters for an e-mail address to contain.
-    """
-
-    __SEP = '..'
-    __NEXT = './'
-
-    owner = db.UserProperty()
-    filename = db.StringProperty()
-    uploaded_on = db.DateTimeProperty()
-    source = db.StringProperty()
-    blobkey = db.StringProperty()
-    index_link = db.StringProperty()
-
-
-    @staticmethod
-    def get_key_name(username, date, blob_key):
-        """Returns the internal key for a particular item in the database.
-
-        Our items are stored with keys of the form 'user/date/blob_key' ('/' is
-        not the real separator, but __SEP is).
-
-        Args:
-            username: The given user's e-mail address.
-            date: A datetime object representing the date and time that an input
-                file was uploaded to this app.
-            blob_key: The blob key corresponding to the location of the input
-                file in the Blobstore.
-        Returns:
-            The internal key for the item specified by
-                (username, date, blob_key).
-        """
-
-        sep = FileMetadata.__SEP
-        return str(username + sep + str(date) + sep + blob_key)
-
 
 
 class FileIndexTooLargeError(Exception):
@@ -256,7 +209,7 @@ class Preprocessing(object):
             print '++++++++++++++++++++++++++++++++'
             print index
             print key
-        Preprocessing.ind_to_title[int(index)] = Preprocessing.titlecase(title)
+        Preprocessing.ind_to_title[int(index)] = title
         for value in values:
             split = value.split(_SEP)
             offset, character = split
@@ -392,8 +345,10 @@ def index_map(data):
             file_index, offset)
     #print title
     #print character
+    line_db = Line(line=line)
+    line_id = line_db.put()
     for word in get_words(line.lower()):
-        yield (word + _SEP + title + _SEP + character, line)
+        yield (word + _SEP + title + _SEP + character, line_id)
 
 
 def index_reduce(key, values):
@@ -410,18 +365,19 @@ def index_reduce(key, values):
     if not word:
         word = Word(id=word_value, name=word_value)
     
-    work = Work(parent=word.key, id=work_value, title=work_value)
+    work_titlecase = Preprocessing.titlecase(work_value)
+    work = Work(parent=word.key, id=work_titlecase, title=work_titlecase)
 
-    char = Character(parent=work.key, id=char_value, name=char_value)
-   
-    for line in values:
-        mention = Line(line=line)
-        char.mentions.append(mention.put())
+    character_titlecase = Preprocessing.titlecase(char_value)
+    char = Character(parent=work.key, id=character_titlecase, 
+        name=character_titlecase)
+    
+    for line_id in values:
+        char.mentions.append(line_id)
     
     word.put()
     work.put()
     char.put()
-    yield '%s: %s\n' % (key, list(set(values)))
 
 
 class IndexPipeline(base_handler.PipelineBase):
@@ -434,7 +390,7 @@ class IndexPipeline(base_handler.PipelineBase):
     def run(self, filekey, blobkey, ind_to_title, pos_to_char_dicts,
             ind_to_sorted_offsets):
         """Run the pipeline of the mapreduce job."""
-        output = yield mapreduce_pipeline.MapreducePipeline(
+        yield mapreduce_pipeline.MapreducePipeline(
                 'index',
                 'auxiliary.preprocessing.index_map',
                 'auxiliary.preprocessing.index_reduce',
@@ -450,15 +406,7 @@ class IndexPipeline(base_handler.PipelineBase):
                         'ind_to_sorted_offsets': ind_to_sorted_offsets
                     }
                 },
-                reducer_params={
-                    'output_writer': {
-                        'mime_type': 'text/plain',
-                        'output_sharding': 'input',
-                        'filesystem': 'blobstore',
-                    },
-                },
                 shards=16)
-        yield StoreOutput(filekey, output)
 
 
 class StoreOutput(base_handler.PipelineBase):
