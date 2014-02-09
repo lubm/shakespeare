@@ -387,10 +387,11 @@ def index_map(data):
     ind_to_sorted_offsets = params['metadata']['ind_to_sorted_offsets']
     character = Preprocessing.get_character(char_maps, ind_to_sorted_offsets,
             file_index, offset)
+    character_titlecase = Preprocessing.titlecase(character)
     #print title
     #print character
     for word in get_words(line.lower()):
-        yield (word + _SEP + title + _SEP + character, line)
+        yield (word + _SEP + title + _SEP + character_titlecase, line)
 
 
 def index_reduce(key, values):
