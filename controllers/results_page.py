@@ -7,6 +7,7 @@ from webapp2_extras import json
 
 import auxiliary.formatter as formatter
 
+from models.line import Line
 from models.character import Character
 from models.word import Word
 from models.work import Work
@@ -65,7 +66,8 @@ def get_work_mentions_of_word_name(word_name):
             work_chars = Character.query(ancestor=work.key)
             mentions = []
             for char in work_chars:
-                mentions += char.mentions
+                mentions += [mention_key.get().line for mention_key in
+                    char.mentions]
             work_mentions[work.title] = bold_mentions(word.name, mentions)
     return work_mentions
 
@@ -89,8 +91,10 @@ def get_hierarchical_mentions(word_name):
             work_chars = Character.query(ancestor=work.key)
             hierarchical_mentions[work.title] = {}
             for char in work_chars:
+                mentions = [mention_key.get().line for mention_key in
+                    char.mentions]
                 hierarchical_mentions[work.title][char.name] =\
-                    bold_mentions(word.name, char.mentions)
+                    bold_mentions(word.name, mentions)
     return hierarchical_mentions
 
 

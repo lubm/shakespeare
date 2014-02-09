@@ -159,5 +159,6 @@ class ClearDatastoreHandler(webapp2.RequestHandler):
         ndb.delete_multi(Word.query().fetch(keys_only=True))
         ndb.delete_multi(Work.query().fetch(keys_only=True))
         ndb.delete_multi(Character.query().fetch(keys_only=True))
+        ndb.delete_multi(Mention.query().fetch(keys_only=True))
         db.delete(FileMetadata.all(keys_only=True).run())
         self.redirect('/admin')

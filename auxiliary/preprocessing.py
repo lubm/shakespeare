@@ -16,6 +16,7 @@ from mapreduce import context
 from mapreduce import mapreduce_pipeline
 
 from models.character import Character
+from models.line import Line
 from models.word import Word
 from models.work import Work
 
@@ -412,9 +413,10 @@ def index_reduce(key, values):
     work = Work(parent=word.key, id=work_value, title=work_value)
 
     char = Character(parent=work.key, id=char_value, name=char_value)
-    
+   
     for line in values:
-        char.mentions.append(line)
+        mention = Line(line=line)
+        char.mentions.append(mention.put())
     
     word.put()
     work.put()
