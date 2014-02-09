@@ -10,7 +10,6 @@ from controllers.results_page import ResultsPageController
 from controllers.define_page import DefinePageController
 from controllers.results_page import TreemapHandler
 
-
 APP = webapp2.WSGIApplication([
     ('/', HomePageController),
     ('/search', ResultsPageController),
@@ -21,3 +20,4 @@ APP = webapp2.WSGIApplication([
     ('/clear', ClearDatastoreHandler),
     ('/treemap', TreemapHandler)
 ], debug=True)
+

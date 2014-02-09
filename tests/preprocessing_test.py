@@ -5,25 +5,29 @@ import os
 
 class CaseInstance(object):
 
-    def __init__(self, text, title, body_index, formatted_title, speaks_offsets):
+    def __init__(self, text, title, body_index, formatted_title, speaks_offsets,
+        sorted_offsets):
         self.text = text
         self.body_index = body_index
         self.title = title
         self.formatted_title = formatted_title
         self.speaks_offsets = speaks_offsets
+        self.sorted_offsets = sorted_offsets
 
 class PreprocessingTest(unittest.TestCase):
 
     case_instances = [
         CaseInstance(text='''	JORGE
 	JORGE
+
 ANA	Jorge I (Hanover, 28 de maio de 1660 Osnabruque, 11 de junho
 de 1727) foi o Rei da GraBretanha e Irlanda de 1 de agosto de 1714 
 at sua morte, e tambem governante do Ducado e Eleitorado de II.''',
         body_index=14,
         title='JORGE',
         formatted_title='Jorge',
-        speaks_offsets={0:'ANA'}),
+        speaks_offsets={1: 'ANA'},
+        sorted_offsets=[1]),
 
         CaseInstance(text='''	THE TAMING OF THE SHREW
 
@@ -124,7 +128,8 @@ SLY	Ye are a baggage: the Slys are no rogues; look in
         body_index=1107,
         title='THE TAMING OF THE SHREW',
         formatted_title='The Taming Of The Shrew',
-        speaks_offsets={88: 'SLY',120: 'Hostess', 158: 'SLY'}),
+        speaks_offsets={88: 'SLY', 120: 'Hostess', 158: 'SLY'},
+        sorted_offsets=[88, 120, 158]),
 
         CaseInstance(text='''	HAMLET
 
@@ -239,7 +244,8 @@ BERNARDO	Have you had quiet guard?''',
         formatted_title='Hamlet',
         speaks_offsets={113: 'BERNARDO', 136: 'FRANCISCO', 191: 'BERNARDO',
                 221: 'FRANCISCO', 242: 'BERNARDO', 256: 'FRANCISCO', 307:
-                'BERNARDO', 369: 'FRANCISCO', 455: 'BERNARDO'}),
+                'BERNARDO', 369: 'FRANCISCO', 455: 'BERNARDO'},
+        sorted_offsets=[113, 136, 191, 221, 242, 258, 307, 369, 455]),
         
         CaseInstance(text='''	A LOVER'S COMPLAINT
 
@@ -255,7 +261,8 @@ Storming her world with sorrow's wind and rain.''',
         body_index=21,
         title='A LOVER\'S COMPLAINT',
         formatted_title='A Lover\'s Complaint',
-        speaks_offsets={})]
+        speaks_offsets={},
+        sorted_offsets=[])]
 
     def test_find_title(self):
         for case_instance in self.case_instances:
@@ -272,6 +279,45 @@ Storming her world with sorrow's wind and rain.''',
             speaks_offsets = Preprocessing.get_speaks_offsets(case_instance.
                 text[case_instance.body_index:])
             self.assertEquals(speaks_offsets, case_instance.speaks_offsets)
+
+    def test_get_character_in_epilog(self):
+        for case_instance in self.case_instances:
+            speaks_offsets_str = {str(key): value for key, value in case_instance.speaks_offsets.iteritems()}
+            char = Preprocessing.get_character({'0': speaks_offsets_str},
+                {'0': case_instance.sorted_offsets}, 0, 0)
+            self.assertEquals('EPILOG', char)     
+
+    def test_get_character_for_first_case(self):
+        test_case = self.case_instances[0]
+        speaks_offsets_str = {str(key): value for key, value in test_case.speaks_offsets.iteritems()}
+
+        char = Preprocessing.get_character({'0': speaks_offsets_str}, 
+            {'0' : test_case.sorted_offsets}, 0, 2)
+        self.assertEquals('ANA', char)
+
+    def test_get_character_for_second_case(self):
+        test_case = self.case_instances[1]
+        speaks_offsets_str = {str(key): value for key, value in test_case.speaks_offsets.iteritems()}
+
+        char = Preprocessing.get_character({'0': speaks_offsets_str}, 
+            {'0' : test_case.sorted_offsets}, 0, 90)
+        self.assertEquals('SLY', char)
+
+        epilog = Preprocessing.get_character({'0': speaks_offsets_str}, 
+            {'0' : test_case.sorted_offsets}, 0, 50)
+        self.assertEquals('EPILOG', epilog)
+
+        hostess = Preprocessing.get_character({'0': speaks_offsets_str}, 
+            {'0' : test_case.sorted_offsets}, 0, 120)
+        self.assertEquals('Hostess', hostess)
+
+    def test_get_character_for_file_without_characters(self):
+        test_case = self.case_instances[3]
+        speaks_offsets_str = {str(key): value for key, value in test_case.speaks_offsets.iteritems()}
+
+        epilog = Preprocessing.get_character({'0': speaks_offsets_str}, 
+            {'0' : test_case.sorted_offsets}, 0, 38245)
+        self.assertEquals('EPILOG', epilog)
 
 if __name__ == '__main__':
     unittest.main()

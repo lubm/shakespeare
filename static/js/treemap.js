@@ -9,11 +9,11 @@ function drawChart(arrayData) {
     var tree = new google.visualization.TreeMap(document.
         getElementById('treemap'));
     tree.draw(data, {
-        minColor: '#CCC',
-        midColor: '#709EC1',
-        maxColor: '#B04949',
+        minColor: '#709EC1',
+        maxColor: '#B94949',
         fontColor: 'black',
-        showScale: true});
+        showScale: true,
+        useWeightedAverageForAggregation: false});
 }
 
 $(document).ready(function() {

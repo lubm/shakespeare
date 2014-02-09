@@ -7,6 +7,7 @@ from webapp2_extras import json
 
 import auxiliary.formatter as formatter
 
+from models.line import Line
 from models.character import Character
 from models.word import Word
 from models.work import Work
@@ -65,7 +66,8 @@ def get_work_mentions_of_word_name(word_name):
             work_chars = Character.query(ancestor=work.key)
             mentions = []
             for char in work_chars:
-                mentions += char.mentions
+                mentions += [mention_key.get().line for mention_key in
+                    char.mentions]
             work_mentions[work.title] = bold_mentions(word.name, mentions)
     return work_mentions
 
@@ -89,8 +91,10 @@ def get_hierarchical_mentions(word_name):
             work_chars = Character.query(ancestor=work.key)
             hierarchical_mentions[work.title] = {}
             for char in work_chars:
+                mentions = [mention_key.get().line for mention_key in
+                    char.mentions]
                 hierarchical_mentions[work.title][char.name] =\
-                    bold_mentions(word.name, char.mentions)
+                    bold_mentions(word.name, mentions)
     return hierarchical_mentions
 
 
@@ -153,9 +157,12 @@ class TreemapHandler(webapp2.RequestHandler):
                     count_dict_values(hierarchical_mentions[work]),
                     count_dict_values(hierarchical_mentions[work])])
                 for char in hierarchical_mentions[work]:
-                    treemap_data.append([char, work,
+                    if not char or char == 'None': #TODO: Remove last check.
+                        continue
+                    treemap_data.append([{'v': work + char, 'f': char}, work,
                         len(hierarchical_mentions[work][char]),
                         len(hierarchical_mentions[work][char])])
 
+            print treemap_data
             self.response.headers['Content-Type'] = 'text/json'
             self.response.out.write(json.encode({"array": treemap_data}))
