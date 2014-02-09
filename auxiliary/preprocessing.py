@@ -230,6 +230,8 @@ class Preprocessing(object):
         else:
             body = text[offset:]
             offset_to_char = Preprocessing.get_speaks_offsets(body)
+            if len(offset_to_char) == 0:
+                yield str(ind) + _SEP + title, '0' + _SEP + 'None'
             for key in offset_to_char:
                 yield str(ind) + _SEP + title, str(key) + _SEP + offset_to_char[key]
 
@@ -247,6 +249,10 @@ class Preprocessing(object):
         """
         pos_to_char_dict = {}
         index, title = key.split(_SEP)
+        if index == '12' or index == '27' or index == '38':
+            print '++++++++++++++++++++++++++++++++'
+            print index
+            print key
         Preprocessing.ind_to_title[int(index)] = title
         for value in values:
             split = value.split(_SEP)
