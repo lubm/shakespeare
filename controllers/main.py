@@ -9,6 +9,8 @@ from controllers.home_page import HomePageController
 from controllers.results_page import ResultsPageController
 from controllers.define_page import DefinePageController
 from controllers.results_page import TreemapHandler
+from controllers.results_page import CharactersHandler
+from controllers.results_page import FilterHandler
 
 APP = webapp2.WSGIApplication([
     ('/', HomePageController),
@@ -18,6 +20,8 @@ APP = webapp2.WSGIApplication([
     (r'/blobstore/(.*)', DownloadHandler),
     ('/define', DefinePageController),
     ('/clear', ClearDatastoreHandler),
-    ('/treemap', TreemapHandler)
+    ('/treemap', TreemapHandler),
+    ('/chars', CharactersHandler),
+    ('/filter', FilterHandler)
 ], debug=True)
 

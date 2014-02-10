@@ -163,6 +163,75 @@ class TreemapHandler(webapp2.RequestHandler):
                         len(hierarchical_mentions[work][char]),
                         len(hierarchical_mentions[work][char])])
 
-            print treemap_data
             self.response.headers['Content-Type'] = 'text/json'
             self.response.out.write(json.encode({"array": treemap_data}))
+
+
+def get_work_characters(word_name, work_title):
+    word_db = Word.get_by_id(word_name)
+    work_db = Work.get_by_id(work_title, parent=word_db.key)
+    char_names = [char.name for char in
+        Character.query(ancestor=work_db.key).fetch()]
+    return char_names
+
+class CharactersHandler(webapp2.RequestHandler):
+    """Class for retrieving characters associated to a given work."""
+
+    def get(self):
+        """Returns the characters of a work"""
+        print 'HERE'
+        word_value = cgi.escape(self.request.get('searched_word').lower())
+        work_value = self.request.get('work_filter')
+        chars = get_work_characters(word_value, work_value)
+        
+        print chars
+        self.response.headers['Content-Type'] = 'text/json'
+        self.response.out.write(json.encode({'chars': chars}))
+
+def get_work_mentions(word_name, work_title):
+    word_db = Word.get_by_id(word_name)
+    work_db = Work.get_by_id(work_title, parent=word_db.key)
+    chars_db = Character.query(ancestor=work_db.key).fetch()
+    mentions_dict = {work_title: {}}
+    for char_db in chars_db:
+        mentions_dict[work_title][char_db.name] = bold_mentions(word_name, 
+            [mention_key.get().line for mention_key in char_db.mentions])
+    return mentions_dict
+
+def get_char_mentions(word_name, work_title, char_name):
+    word_db = Word.get_by_id(word_name)
+    work_db = Work.get_by_id(work_title, parent=word_db.key)
+    char_db = Character.get_by_id(char_name, parent=work_db.key)
+    #TODO(luciana): create a function to retrieve character lines
+    mentions = [mention_key.get().line for mention_key in
+        char_db.mentions]
+    return {work_title: {char_name: bold_mentions(word_name, mentions)}}
+
+class FilterHandler(webapp2.RequestHandler):
+    """Class for receiving request of filtering results by work and
+       character."""
+
+    def get(self):
+        """Returns the mentions related to a specific work and character"""
+        word_value = cgi.escape(self.request.get('searched_word').lower())
+        work_value = self.request.get('work_filter')
+        char_value = self.request.get('char_filter')
+        print '--------------------- WORD'
+        print word_value
+        print '--------------------- WORK'
+        print work_value
+        print '--------------------- CHAR'
+        print char_value
+
+
+        if work_value == 'Any':
+            result = get_hierarchical_mentions(word_value)
+        elif char_value == 'Any':
+            result = get_work_mentions(word_value, work_value)
+        else:
+            result = get_char_mentions(word_value, work_value, char_value)
+
+        print result
+        self.response.headers['Content-Type'] = 'text/json'
+        self.response.out.write(json.encode({'result': result}))
+
