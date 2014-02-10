@@ -107,7 +107,6 @@ class AdminPageController(webapp2.RequestHandler):
 
     def post(self):
         """Start map reduce job on selected file."""
-        filekey = self.request.get("filekey")
         blob_key = self.request.get("blobkey")
 
         database_creation.run(blob_key)
