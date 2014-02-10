@@ -319,7 +319,7 @@ def get_words(line):
     """Split a line into list of words."""
     line = re.sub(r'\W+', ' ', line)
     line = re.sub(r'[_0-9]+', ' ', line)
-    return set(line.split())
+    return line.split()
 
 
 _SEP = '++'
@@ -366,8 +366,11 @@ def index_reduce(key, values):
     keys = key.split(_SEP)
     word_value, work_value, char_value = keys
     word = Word.get_by_id(word_value)
+
     if not word:
-        word = Word(id=word_value, name=word_value)
+        word = Word(id=word_value, name=word_value, count=len(values))
+    else:
+        word.count += len(values)
     
     work_titlecase = Preprocessing.titlecase(work_value)
     work = Work(parent=word.key, id=work_titlecase, title=work_titlecase)
@@ -376,8 +379,7 @@ def index_reduce(key, values):
     char = Character(parent=work.key, id=character_titlecase, 
         name=character_titlecase)
     
-    for line in values:
-        char.mentions.append(pickle.loads(line))
+    char.mentions = [pickle.loads(line) for line in set(values)]
     
     word.put()
     work.put()

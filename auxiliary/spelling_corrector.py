@@ -108,6 +108,7 @@ def _get_candidates(words):
     known_words = []
     for word in words:
         word_from_database = Word.get_by_id(word)
+
         if word_from_database:
             known_words.append(word_from_database)
     return known_words
