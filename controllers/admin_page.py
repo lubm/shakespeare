@@ -110,7 +110,7 @@ class AdminPageController(webapp2.RequestHandler):
         filekey = self.request.get("filekey")
         blob_key = self.request.get("blobkey")
 
-        database_creation.run(blob_key, filekey)
+        database_creation.run(blob_key)
 
 
 class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):

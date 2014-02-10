@@ -276,19 +276,18 @@ class Preprocessing(object):
         logging.error('PROBLEM: could not find filename in index')
         return None
 
-def run(blobkey, filekey):
+def run(blobkey):
     """Run the mapreduce job to preprocess the works.
     
     Args:
         blobkey: A blobkey to a zip file containing one or more text files.
-        filekey: The file key to this blobkey.
     """
     Preprocessing.pos_to_character_dicts = {}
     Preprocessing.ind_to_title = {}
     Preprocessing.filename_to_ind = {}
     Preprocessing.ind_to_sorted_offsets = {}
     Preprocessing.build_name_to_ind(blobkey)
-    pipeline =  PrePipeline(blobkey, filekey, Preprocessing.filename_to_ind)
+    pipeline =  PrePipeline(blobkey, Preprocessing.filename_to_ind)
     pipeline.start()
     
 
@@ -299,12 +298,11 @@ class PrePipeline(base_handler.PipelineBase):
         blobkey: blobkey to process as string. Should be a zip archive with
             text files inside.
     """
-    def __init__(self, blobkey, filekey, filename_to_ind) :
-       super(PrePipeline, self).__init__(blobkey, filekey, filename_to_ind)
+    def __init__(self, blobkey, filename_to_ind) :
+       super(PrePipeline, self).__init__(blobkey, filename_to_ind)
        self.blobkey = blobkey
-       self.filekey = filekey
  
-    def run(self, blobkey, filekey, filename_to_ind):
+    def run(self, blobkey, filename_to_ind):
         """Run the pipeline of the mapreduce job."""
         pipeline = yield mapreduce_pipeline.MapreducePipeline(
                 'preprocessing',
@@ -326,7 +324,7 @@ class PrePipeline(base_handler.PipelineBase):
         logging.debug(str(Preprocessing.ind_to_title))
         logging.debug(str(Preprocessing.pos_to_character_dicts))
         logging.debug(str(Preprocessing.ind_to_sorted_offsets))
-        pipeline = IndexPipeline(self.filekey, self.blobkey,
+        pipeline = IndexPipeline(self.blobkey,
                 Preprocessing.ind_to_title,
                 Preprocessing.pos_to_character_dicts,
                 Preprocessing.ind_to_sorted_offsets)
@@ -413,7 +411,7 @@ class IndexPipeline(base_handler.PipelineBase):
         blobkey: blobkey to process as string. Should be a zip archive with
             text files inside.
     """
-    def run(self, filekey, blobkey, ind_to_title, pos_to_char_dicts,
+    def run(self, blobkey, ind_to_title, pos_to_char_dicts,
             ind_to_sorted_offsets):
         """Run the pipeline of the mapreduce job."""
         yield mapreduce_pipeline.MapreducePipeline(
