@@ -1,4 +1,4 @@
-""" A module to preprocess Shakespeare's works, gathering metadata."""
+""" A module to preprocess Shakespeare's works and build an index."""
 
 import logging
 import re
@@ -40,23 +40,37 @@ _SEP = '++'
 class Preprocessing(object):
     """Preprocess Shakespeare's works to identify titles and characters.
 
-        The preprocessing holds two important data strucutures. The first is a
+        The preprocessing holds four data strucutures. The first is a
         map(index, title) that relates the index of a text file (regarding its
         position in the zip file provided) to the title of the work it refers
-        to. The second data structure is a list of maps. The i-th map is related
-        to the i-th text file. Each map is of the form (offset, character), in
-        which offset is the byte-offset of each line of text pronounced by a
-        character.
+        to.
+
+        The second data structure is a map of maps. The map indexed
+        by the key i is related to the i-th text file. Each map is of the form
+        (offset, character), in which offset is the byte-offset of each line of
+        text pronounced by a character.
+
+        The third data structure is a map(filename, index) that relates the name
+        of a file in the zip to its position inside the zip.
+
+        The fourth data structure is a map of lists. The map indexed by the key i
+        is related to the i-th file. Each list contains the sorted keys of the
+        respective i-th dictionary in the pos_to_character_dicts data structure.
+        These lists are useful for computations that requires sorting these keys
+        and that are performed many times (in the function get_character).
 
         Attributes:
-            ind_to_title: Dictionary that relates the index of a text file to
-                the title of the work it refers to.
-            pos_to_character_dicts: Dictionary that relates the index of a text
+            ind_to_title: Dictionary that relates the index of a text (integer)
                 file to the title of the work it refers to.
+            pos_to_character_dicts: Dictionary of dictionaries indexed by file
+                index (integer). Each dictionary relates an offset in a file to a
+                character.
+            filename_to_ind: Dictionary that relates a string with the name of a
+                file inside the zip to its index (integer) in the zip file.
 
     """  
-    pos_to_character_dicts = {}
     ind_to_title = {}
+    pos_to_character_dicts = {}
     filename_to_ind = {}
     ind_to_sorted_offsets = {}
 
@@ -75,17 +89,26 @@ class Preprocessing(object):
             raise FileIndexTooLargeError(len(cls.ind_to_title), index)
         return cls.ind_to_title[index]
 
-    @classmethod
-    def get_character(cls, char_maps, ind_to_sorted_offsets, index, offset):
+    @staticmethod
+    def get_character(char_maps, ind_to_sorted_offsets, index, offset):
         """Get character relative to a line.
 
         Args:
-            index: index of file relative to zipfile passed to initializer
-            offset: initial byte offset of line relative to the text file
+            char_maps: dict of dicts that relates a file index to a dict of the
+                type (offset, character).
+            ind_to_sorted_offsets: dicts that relates a file index to sorted
+                list of the offsets of the respective map in the previous
+                structure.
+            index: index of file relative to zipfile passed to the initializer.
+            offset: initial byte offset of line relative to the text file.
 
         Returns:
-            character: a string with the name of the character or empty string
-                if the line is not pronounced by any character
+            character: a string with the name of the character or 'EPILOG' if
+            the line is part of the epilog.
+
+        TODO(izabela): fix behavior for lines that indicate stage behavior.
+            Right now the previous character who pronounced anything is
+            returned.
         """
 
         if index >= len(char_maps):
@@ -131,7 +154,7 @@ class Preprocessing(object):
         
         Args:
             body: A string containing a work without the epilog (the section
-            before the second appearance of the title).
+                before the second appearance of the title).
         """
         char_reg = re.compile(r'(^|\n)([A-Z].*)\t')
         offset_to_char = {}
@@ -173,11 +196,15 @@ class Preprocessing(object):
                 string.
 
         Yields:
-            ind, value: ind is the index of the file being processed, inside the
-                zipfile and value is a string of the form <offset>_SEP<character>.
-                So, if (2, 100++HAMLET) is yielded it means that in the second file
-                of the zipfile being processed, at the 100th byte, there is a
-                speak by Hamlet.  
+            ind_and_title, value: ind_and_title is a string of the form
+                <index>_SEP<title> and value is a string of the form 
+                <offset>_SEP<character>.
+
+            Example:
+
+                If (2++HAMLET, 100++BERNARNDO) is 
+                yielded it means that the second file of the zipfile is entitled
+                'HAMLET' and at the 100th byte there is a speak pronounced by BERNARDO.  
         """
         zipinfo, text_fn = data
         filename = zipinfo.filename
@@ -186,12 +213,12 @@ class Preprocessing(object):
         title = Preprocessing.find_title(text)
         offset = Preprocessing.get_epilog_len(text, title)
         if offset == None:
-            yield str(ind) + _SEP + title, '0' + _SEP + 'None'
+            yield str(ind) + _SEP + title, '0' + _SEP + ''
         else:
             body = text[offset:]
             offset_to_char = Preprocessing.get_speaks_offsets(body)
             if len(offset_to_char) == 0:
-                yield str(ind) + _SEP + title, '0' + _SEP + 'None'
+                yield str(ind) + _SEP + title, '0' + _SEP + ''
             for key in offset_to_char:
                 yield str(ind) + _SEP + title, str(key) + _SEP + offset_to_char[key]
 
@@ -239,7 +266,7 @@ class Preprocessing(object):
 
         Args:
             filename: A string containing the name of a file in the zipfile
-            being processed.            
+                being processed.            
         """
         ctx = context.get()
         filename_to_ind = \
@@ -249,20 +276,20 @@ class Preprocessing(object):
         logging.error('PROBLEM: could not find filename in index')
         return None
 
-    @classmethod
-    def run(cls, blobkey, filekey):
-        """Run the mapreduce job to preprocess the works.
-        
-        Args:
-            blobkey: A blobkey to a zip file containing one or more text files.
-        """
-        cls.pos_to_character_dicts = {}
-        cls.ind_to_title = {}
-        cls.filename_to_ind = {}
-        cls.ind_to_sorted_offsets = {}
-        cls.build_name_to_ind(blobkey)
-        pipeline =  PrePipeline(blobkey, filekey, Preprocessing.filename_to_ind)
-        pipeline.start()
+def run(blobkey, filekey):
+    """Run the mapreduce job to preprocess the works.
+    
+    Args:
+        blobkey: A blobkey to a zip file containing one or more text files.
+        filekey: The file key to this blobkey.
+    """
+    Preprocessing.pos_to_character_dicts = {}
+    Preprocessing.ind_to_title = {}
+    Preprocessing.filename_to_ind = {}
+    Preprocessing.ind_to_sorted_offsets = {}
+    Preprocessing.build_name_to_ind(blobkey)
+    pipeline =  PrePipeline(blobkey, filekey, Preprocessing.filename_to_ind)
+    pipeline.start()
     
 
 class PrePipeline(base_handler.PipelineBase):
