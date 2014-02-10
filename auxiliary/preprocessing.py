@@ -74,21 +74,6 @@ class Preprocessing(object):
     filename_to_ind = {}
     ind_to_sorted_offsets = {}
 
-    @classmethod
-    def get_title(cls, index):
-        """Get title of work.
-
-        Args:
-            index: index of file relative to zipfile passed to initializer
-
-        Returns:
-            title: a string with the capitalized title or None if index not
-                found
-        """
-        if index >= len(cls.ind_to_title):
-            raise FileIndexTooLargeError(len(cls.ind_to_title), index)
-        return cls.ind_to_title[index]
-
     @staticmethod
     def get_character(char_maps, ind_to_sorted_offsets, index, offset):
         """Get character relative to a line.

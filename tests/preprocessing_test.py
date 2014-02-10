@@ -21,7 +21,7 @@ class PreprocessingTest(unittest.TestCase):
 	JORGE
 
 ANA	Jorge I (Hanover, 28 de maio de 1660 Osnabruque, 11 de junho
-de 1727) foi o Rei da GraBretanha e Irlanda de 1 de agosto de 1714 
+de 1727) foi o Rei da GraBretanha e Irlanda de 1 de agosto de 1714
 at sua morte, e tambem governante do Ducado e Eleitorado de II.''',
         body_index=14,
         title='JORGE',
@@ -238,7 +238,7 @@ BERNARDO	'Tis now struck twelve; get thee to bed, Francisco.
 FRANCISCO	For this relief much thanks: 'tis bitter cold,
     And I am sick at heart.
 
-BERNARDO	Have you had quiet guard?''', 
+BERNARDO	Have you had quiet guard?''',
         body_index=1108,
         title='HAMLET',
         formatted_title='Hamlet',
@@ -246,7 +246,7 @@ BERNARDO	Have you had quiet guard?''',
                 221: 'FRANCISCO', 242: 'BERNARDO', 256: 'FRANCISCO', 307:
                 'BERNARDO', 369: 'FRANCISCO', 455: 'BERNARDO'},
         sorted_offsets=[113, 136, 191, 221, 242, 258, 307, 369, 455]),
-        
+
         CaseInstance(text='''	A LOVER'S COMPLAINT
 
 
@@ -257,17 +257,171 @@ My spirits to attend this double voice accorded,
 And down I laid to list the sad-tuned tale;
 Ere long espied a fickle maid full pale,
 Tearing of papers, breaking rings a-twain,
-Storming her world with sorrow's wind and rain.''', 
+Storming her world with sorrow's wind and rain.''',
         body_index=21,
         title='A LOVER\'S COMPLAINT',
         formatted_title='A Lover\'s Complaint',
         speaks_offsets={},
-        sorted_offsets=[])]
+        sorted_offsets=[]),
+
+    CaseInstance(text='''	MACBETH
+
+
+	DRAMATIS PERSONAE
+
+
+DUNCAN	king of Scotland.
+
+
+MALCOLM	|
+	|  his sons.
+DONALBAIN	|
+
+
+MACBETH	|
+	|  generals of the king's army.
+BANQUO	|
+
+
+MACDUFF	|
+	|
+LENNOX	|
+	|
+ROSS	|
+	|  noblemen of Scotland.
+MENTEITH	|
+	|
+ANGUS	|
+	|
+CAITHNESS	|
+
+
+FLEANCE	son to Banquo.
+
+SIWARD	Earl of Northumberland, general of the English forces.
+
+YOUNG SIWARD	his son.
+
+SEYTON	an officer attending on Macbeth.
+
+	Boy, son to Macduff. (Son:)
+
+	An English Doctor. (Doctor:)
+
+	A Scotch Doctor. (Doctor:)
+
+	A Soldier.
+	A Porter.
+
+	An Old Man
+
+LADY MACBETH:
+
+LADY MACDUFF:
+
+	Gentlewoman attending on Lady Macbeth. (Gentlewoman:)
+
+HECATE:
+
+	Three Witches.
+	(First Witch:)
+	(Second Witch:)
+	(Third Witch:)
+
+	Apparitions.
+	(First Apparition:)
+	(Second Apparition:)
+	(Third Apparition:)
+
+	Lords, Gentlemen, Officers, Soldiers, Murderers,
+	Attendants, and Messengers. (Lord:)
+	(Sergeant:)
+	(Servant:)
+	(First Murderer:)
+	(Second Murderer:)
+	(Third Murderer:)
+	(Messenger:)
+
+SCENE	Scotland: England.
+
+
+
+
+	MACBETH
+
+
+ACT I
+
+
+
+SCENE I	A desert place.
+
+
+	[Thunder and lightning. Enter three Witches]
+
+First Witch	When shall we three meet again
+	In thunder, lightning, or in rain?
+
+Second Witch	When the hurlyburly's done,
+	When the battle's lost and won.
+
+Third Witch	That will be ere the set of sun.
+
+First Witch	Where the place?
+
+Second Witch	                  Upon the heath.
+
+Third Witch	There to meet with Macbeth.
+
+First Witch	I come, Graymalkin!
+
+Second Witch	Paddock calls.
+
+Third Witch	Anon.
+
+ALL	Fair is foul, and foul is fair:
+	Hover through the fog and filthy air.
+
+	[Exeunt]
+
+
+
+
+	MACBETH
+
+
+ACT I
+
+
+
+SCENE II	A camp near Forres.
+
+
+	[Alarum within. Enter DUNCAN, MALCOLM, DONALBAIN,
+	LENNOX, with Attendants, meeting a bleeding Sergeant]
+
+DUNCAN	What bloody man is that? He can report,
+	As seemeth by his plight, of the revolt
+	The newest state.
+
+''',
+    body_index=989,
+    title='MACBETH',
+    formatted_title='Macbeth',
+    speaks_offsets={84: 'First Witch', 164: 'Second Witch', 239: 'Third Witch',
+        285: 'First Witch', 315: 'Second Witch', 363: 'Third Witch',
+        404: 'First Witch', 437: 'Second Witch', 466: 'Third Witch', 485: 'ALL',
+        733: 'DUNCAN'},
+    sorted_offsets=[84, 164, 239, 285, 315, 363, 404, 437, 466, 485, 733])
+
+]
 
     def test_find_title(self):
         for case_instance in self.case_instances:
+            print 'u'
             title = Preprocessing.find_title(case_instance.text)
-            self.assertEquals(title, case_instance.title)
+            self.assertEquals(title, case_instance.title,
+                'Failed index ' + case_instance.title)
 
     def test_titlecase(self):
         for case_instance in self.case_instances:
@@ -285,13 +439,13 @@ Storming her world with sorrow's wind and rain.''',
             speaks_offsets_str = {str(key): value for key, value in case_instance.speaks_offsets.iteritems()}
             char = Preprocessing.get_character({'0': speaks_offsets_str},
                 {'0': case_instance.sorted_offsets}, 0, 0)
-            self.assertEquals('EPILOG', char)     
+            self.assertEquals('EPILOG', char)
 
     def test_get_character_for_first_case(self):
         test_case = self.case_instances[0]
         speaks_offsets_str = {str(key): value for key, value in test_case.speaks_offsets.iteritems()}
 
-        char = Preprocessing.get_character({'0': speaks_offsets_str}, 
+        char = Preprocessing.get_character({'0': speaks_offsets_str},
             {'0' : test_case.sorted_offsets}, 0, 2)
         self.assertEquals('ANA', char)
 
@@ -299,15 +453,15 @@ Storming her world with sorrow's wind and rain.''',
         test_case = self.case_instances[1]
         speaks_offsets_str = {str(key): value for key, value in test_case.speaks_offsets.iteritems()}
 
-        char = Preprocessing.get_character({'0': speaks_offsets_str}, 
+        char = Preprocessing.get_character({'0': speaks_offsets_str},
             {'0' : test_case.sorted_offsets}, 0, 90)
         self.assertEquals('SLY', char)
 
-        epilog = Preprocessing.get_character({'0': speaks_offsets_str}, 
+        epilog = Preprocessing.get_character({'0': speaks_offsets_str},
             {'0' : test_case.sorted_offsets}, 0, 50)
         self.assertEquals('EPILOG', epilog)
 
-        hostess = Preprocessing.get_character({'0': speaks_offsets_str}, 
+        hostess = Preprocessing.get_character({'0': speaks_offsets_str},
             {'0' : test_case.sorted_offsets}, 0, 120)
         self.assertEquals('Hostess', hostess)
 
@@ -315,7 +469,7 @@ Storming her world with sorrow's wind and rain.''',
         test_case = self.case_instances[3]
         speaks_offsets_str = {str(key): value for key, value in test_case.speaks_offsets.iteritems()}
 
-        epilog = Preprocessing.get_character({'0': speaks_offsets_str}, 
+        epilog = Preprocessing.get_character({'0': speaks_offsets_str},
             {'0' : test_case.sorted_offsets}, 0, 38245)
         self.assertEquals('EPILOG', epilog)
 

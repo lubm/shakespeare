@@ -14,6 +14,7 @@ from google.appengine.ext import testbed
 from models.character import Character
 from models.word import Word
 from models.work import Work
+from models.line import Line
 from controllers.admin_page import FileMetadata
 from controllers.admin_page import ClearDatastoreHandler
 
@@ -30,19 +31,24 @@ class ClearDatastoreTest(unittest.TestCase):
         """Insert test objects into the datastore."""
         self.objects = []
 
-        word = Word(id='borrower', name='borrower')
-        work = Work(parent=word.key, id='hamlet', title='hamlet')
-        char_1 = Character(parent=work.key, id='hamlet', name='hamlet')
-        char_2 = Character(parent=work.key, id='guard', name='guard')
-        char_1.mentions = ['Neither a borrower nor a lender be', 
-            'To be or not to be.']
-        char_2.mentions = ['Ok, boss!']
+        word = Word(id='borrower', name='borrower', count=1)
+        work = Work(parent=word.key, id='hamlet', title='hamlet', count=1)
+        char_1 = Character(parent=work.key, id='hamlet', name='hamlet', count=1)
+        char_2 = Character(parent=work.key, id='guard', name='guard', count=1)
+        line_1 = Line(line='Neither a borrower nor a lender be').put()
+        line_2 = Line(line='To be or not to be.').put()
+
+        char_1.mentions = [line_1, line_2]
+        line_3 = Line(line='Ok, boss!').put()
+        char_2.mentions = [line_3]
+
         self.objects += [word, work, char_1, char_2]
 
-        word = Word(id='neither', name='neither')
-        work = Work(parent=word.key, id='hamlet', title='hamlet')
-        char = Character(parent=work.key, id='hamlet', name='hamlet')
-        char.mentions = ['Neither a borrower nor a lender be']
+        word = Word(id='neither', name='neither', count=1)
+        work = Work(parent=word.key, id='hamlet', title='hamlet', count=1)
+        char = Character(parent=work.key, id='hamlet', name='hamlet', count=1)
+        line = Line(line='Neither a borrower nor a lender be').put()
+        char.mentions = [line]
         self.objects += [word, work, char]
 
         self.objects += [FileMetadata(filename='dummy'), 
