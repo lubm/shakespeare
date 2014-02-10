@@ -391,18 +391,18 @@ class IndexBuild(object):
         work_titlecase = Preprocessing.titlecase(work_value)
         if not word:
             word = Word(id=word_value, name=word_value, count=len(values))
-            work = Work(parent=word.key, id=work_titlecase, title=work_titlecase,
-                count=len(values))
+            work = Work(parent=word.key, id=work_titlecase,
+                            title=work_titlecase, count=len(values))
         else:
             word.count += len(values)
             work = Work.get_by_id(work_titlecase, parent=word.key)
             if work:
                 work.count += len(values)
             else:
-                work = Work(parent=word.key, id=work_titlecase, 
+                work = Work(parent=word.key, id=work_titlecase,
                     title=work_titlecase, count=len(values))
         character_titlecase = Preprocessing.titlecase(char_value)
-        char = Character(parent=work.key, id=character_titlecase, 
+        char = Character(parent=work.key, id=character_titlecase,
             name=character_titlecase, count= len(values))
         for line in values:
             char.mentions.append(pickle.loads(line))
