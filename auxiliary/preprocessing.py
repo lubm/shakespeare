@@ -307,6 +307,11 @@ class PrePipeline(base_handler.PipelineBase):
 
 
 class IndexBuild(object):
+    def get_words(line):
+        """Split a line into list of words."""
+        line = re.sub(r'\W+', ' ', line)
+        line = re.sub(r'[_0-9]+', ' ', line)
+        return line.split()
 
     @staticmethod
     def get_words(line):
