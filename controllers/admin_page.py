@@ -43,11 +43,11 @@ from google.appengine.api import users
 from google.appengine.ext.webapp import blobstore_handlers
 
 from models.character import Character
+from models.file_metadata import FileMetadata
 from models.line import Line
 from models.word import Word
 from models.work import Work
 from auxiliary.preprocessing import Preprocessing
-from auxiliary.preprocessing import FileMetadata
 from resources.constants import Constants
 import auxiliary.preprocessing as database_creation
 
