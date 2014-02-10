@@ -49,6 +49,7 @@ from models.work import Work
 from auxiliary.preprocessing import Preprocessing
 from auxiliary.preprocessing import FileMetadata
 from resources.constants import Constants
+import auxiliary.preprocessing as database_creation
 
 class Parent(db.Model):
     """ A dumb parent class.
@@ -106,10 +107,9 @@ class AdminPageController(webapp2.RequestHandler):
 
     def post(self):
         """Start map reduce job on selected file."""
-        filekey = self.request.get("filekey")
         blob_key = self.request.get("blobkey")
 
-        Preprocessing.run(blob_key, filekey)
+        database_creation.run(blob_key)
 
 
 class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
