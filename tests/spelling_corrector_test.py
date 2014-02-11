@@ -96,9 +96,9 @@ class SpellingCorrectorTest(unittest.TestCase):
         self.assertTrue(option4 in
             spelling_corrector._words_edit_distance_one('love'))
 
-    def test_get_candidates(self):
-        self.assertEqual(spelling_corrector._get_candidates(['lve']), [])
-        retrieved_result = spelling_corrector._get_candidates(
+    def test_select_valid_words(self):
+        self.assertEqual(spelling_corrector._select_valid_words(['lve']), [])
+        retrieved_result = spelling_corrector._select_valid_words(
             ['love', 'borrower'])
         self.assertEqual(len(retrieved_result), 2)
         self.assertEqual(retrieved_result[0].name, 'love')
