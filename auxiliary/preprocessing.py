@@ -33,7 +33,7 @@ class FileIndexTooLargeError(Exception):
             index was requested.''' % (self.num_files, self.ind_requested)
 
 
-_SEP = '++'
+_SEP = '+'
 
 class Preprocessing(object):
     """Preprocess Shakespeare's works to identify titles and characters.

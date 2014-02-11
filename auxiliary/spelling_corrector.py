@@ -5,6 +5,7 @@ correct word close to it. A word is considered close to another is they are
 have distance 1.
 '''
 from models.word import Word
+from google.appengine.ext import ndb
 
 _ALPHABET = 'abcdefghijklmnopqrstuvwxyz'
 
@@ -105,10 +106,7 @@ def _words_edit_distance_one(word):
 def _get_candidates(words):
     '''Given all the words at distance 1 filters the words that are not present
     in the database and therefore not valid.'''
-    known_words = []
-    for word in words:
-        word_from_database = Word.get_by_id(word)
+    candidate_keys = [ndb.Key(Word, word) for word in words]
+    found_words_with_nones = ndb.get_multi(candidate_keys)
 
-        if word_from_database:
-            known_words.append(word_from_database)
-    return known_words
+    return [word for word in found_words_with_nones if word!=None]
