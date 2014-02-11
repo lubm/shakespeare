@@ -5,6 +5,7 @@ from google.appengine.ext import testbed
 
 from models.word import Word
 from models.work import Work
+from models.line import Line
 from models.character import Character
 
 '''Run this tests like this:
@@ -23,12 +24,12 @@ class DatastoreTest(unittest.TestCase):
 
         self.word = Word(id="death", name="death", count=2)
         self.work = Work(
-            parent=self.word.key, id="Hamlet", title="Hamlet")
+            parent=self.word.key, id="Hamlet", title="Hamlet", count=1)
         self.character = Character(
-            parent=self.work.key, id="Claudius", name="Claudius")
+            parent=self.work.key, id="Claudius", name="Claudius", count=1)
+        line = Line(line='Though yet of Hamlet our dear brother\'s death').put()
 
-        self.character.mentions = [
-            'Though yet of Hamlet our dear brother\'s death']
+        self.character.mentions = [line]
 
         self.word_key = self.word.put()
         self.work_key = self.work.put()
@@ -58,8 +59,9 @@ class DatastoreTest(unittest.TestCase):
 
         retrieved_character = self.character_key.get()
         self.assertEqual('Claudius', retrieved_character.name)
-        self.assertEqual(['Though yet of Hamlet our dear brother\'s death'], 
-            retrieved_character.mentions)
+        self.assertEqual(1, len(retrieved_character.mentions))
+        self.assertEqual('Though yet of Hamlet our dear brother\'s death', 
+            retrieved_character.mentions[0].get().line)
 
     def test_searching_a_non_existing_word(self):
         '''Ensure nothing fails if we search a word that doesn't exist.'''
@@ -79,12 +81,9 @@ class DatastoreTest(unittest.TestCase):
         retrieved_character = Character.query(ancestor=work.key).fetch()
         self.assertEqual(len(retrieved_character), 1)
         char = retrieved_character[0]
-        self.assertEqual(["Though yet of Hamlet our dear brother's death"], 
-            char.mentions)
-
-
-if __name__ == '__main__':
-    unittest.main()
+        self.assertEqual(1, len(char.mentions))
+        self.assertEqual("Though yet of Hamlet our dear brother's death", 
+            char.mentions[0].get().line)
 
 
 

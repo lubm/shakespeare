@@ -11,10 +11,16 @@ class Character(ndb.Model):
 
     Attributes:
         name: Name of the character.
-        mentions: List of the keys for lines said by this character.
+        mentions: List of the keys for lines (that contains an specific word)
+            said by this character. 
+            This list is actually a set: if the word is repeated more than one
+            time in the line, the character would not have the line repeated. 
+        count: The number of times a character says an specific word inside a
+            book.
     """
     name = ndb.StringProperty()
     mentions = ndb.KeyProperty(kind=Line, repeated=True)
+    count = ndb.IntegerProperty()
 
     def __init__(self, *args, **kwargs):
         """Initialize the character with an empty list of mentions."""

@@ -3,6 +3,10 @@
  * rendering on the html, besides responding to interaction in the filter
  * form. */
 
+function getSearchedWord() {
+    return document.location.search.split('=')[1]; 
+}
+
 function insertMentions(mentions) {
     /* Displays the mentions of the search filtered by work and character. The 
      * filter is optional */
@@ -12,6 +16,8 @@ function insertMentions(mentions) {
         word = document.createElement('i');
         $(word).text($('#search-value').val());
         $(message).append(word);
+        $(message).addClass('harlem-shake');
+        $(message).attr('data-animation', 'wobble');
         $('#results').append(message);
     }
     
@@ -21,6 +27,8 @@ function insertMentions(mentions) {
         title = document.createElement('div');
         $(title).addClass('title text-danger');
         $(title).text(work);
+        $(title).addClass('harlem-shake');
+        $(title).attr('data-animation', 'tada');
         $(item).append(title);
     
         for (charac in mentions[work]) {
@@ -28,6 +36,8 @@ function insertMentions(mentions) {
             $(speaker).addClass('leader');
             $(speaker).css('color', '#ccc');
             $(speaker).text(charac);
+            $(speaker).addClass('harlem-shake');
+            $(speaker).attr('data-animation', 'scale');
             $(item).append(speaker);
             for (var i = 0; i < mentions[work][charac].length; i++) {
                 line = document.createElement('p');
@@ -48,11 +58,12 @@ function insertResultsInfo(time, number_results) {
 function insertDidYouMean(did_you_mean) {
     if (did_you_mean) {
         message = document.createElement('span');
-        message.text('Did you mean:');
-        message.addClass('google-red');
+        $(message).text('Did you mean: ');
+        $(message).addClass('google-red');
         suggestion = document.createElement('a');
-        suggestion.text(did_you_mean);
-        suggestion.href('/results?searched_word=' + did_you_mean);
+        suggestion.href = '/results?searched_word=' + did_you_mean;
+        $(suggestion).text(did_you_mean);
+        $(suggestion).css('font-style', 'bold italic');
         $('#did-you-mean').append(message);
         $('#did-you-mean').append(suggestion);
     }
@@ -114,7 +125,7 @@ function filterByWorkAndCharacter() {
     var request = {
         char_filter: $('#char-select').find(':selected').text(),
         work_filter: $('#work-select').find(':selected').text(),
-        searched_word: document.location.search.split('=')[1] 
+        searched_word: getSearchedWord() 
     };
     
     searchRequest(request);
@@ -146,7 +157,7 @@ $(document).ready(function() {
         var request = {
             char_filter: 'Any',
             work_filter: 'Any',
-            searched_word: document.location.search.split('=')[1] 
+            searched_word: getSearchedWord() 
         };
 
         searchRequest(request);

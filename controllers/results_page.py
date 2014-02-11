@@ -294,6 +294,9 @@ class SearchHandler(webapp2.RequestHandler):
             'time': round(end - start, 4),
             'did_you_mean': spelling_corrector.get_suggestion(word_value)
         }
+
+        print "********************************"
+        print result['did_you_mean']
         
         self.response.headers['Content-Type'] = 'text/json'
         self.response.out.write(json.encode(result))
