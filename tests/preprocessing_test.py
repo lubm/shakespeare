@@ -26,8 +26,8 @@ at sua morte, e tambem governante do Ducado e Eleitorado de II.''',
         body_index=14,
         title='JORGE',
         formatted_title='Jorge',
-        speaks_offsets={1: 'ANA'},
-        sorted_offsets=[1]),
+        speaks_offsets={15: 'ANA'},
+        sorted_offsets=[15]),
 
         CaseInstance(text='''	THE TAMING OF THE SHREW
 
@@ -128,8 +128,8 @@ SLY	Ye are a baggage: the Slys are no rogues; look in
         body_index=1107,
         title='THE TAMING OF THE SHREW',
         formatted_title='The Taming Of The Shrew',
-        speaks_offsets={88: 'SLY', 120: 'Hostess', 158: 'SLY'},
-        sorted_offsets=[88, 120, 158]),
+        speaks_offsets={1265: 'SLY', 1195: 'SLY', 1227: 'Hostess'},
+        sorted_offsets=[1195, 1227, 1265]),
 
         CaseInstance(text='''	HAMLET
 
@@ -242,10 +242,10 @@ BERNARDO	Have you had quiet guard?''',
         body_index=1108,
         title='HAMLET',
         formatted_title='Hamlet',
-        speaks_offsets={113: 'BERNARDO', 136: 'FRANCISCO', 191: 'BERNARDO',
-                221: 'FRANCISCO', 242: 'BERNARDO', 256: 'FRANCISCO', 307:
-                'BERNARDO', 369: 'FRANCISCO', 455: 'BERNARDO'},
-        sorted_offsets=[113, 136, 191, 221, 242, 258, 307, 369, 455]),
+        speaks_offsets={1477: 'FRANCISCO', 1350: 'BERNARDO', 1415: 'BERNARDO',
+        1329: 'FRANCISCO', 1299: 'BERNARDO', 1364: 'FRANCISCO',
+        1563: 'BERNARDO', 1244: 'FRANCISCO', 1221: 'BERNARDO'},
+        sorted_offsets=[1221, 1244, 1299, 1329, 1350, 1364, 1415, 1477, 1563]),
 
         CaseInstance(text='''	A LOVER'S COMPLAINT
 
@@ -408,17 +408,17 @@ DUNCAN	What bloody man is that? He can report,
     body_index=989,
     title='MACBETH',
     formatted_title='Macbeth',
-    speaks_offsets={84: 'First Witch', 164: 'Second Witch', 239: 'Third Witch',
-        285: 'First Witch', 315: 'Second Witch', 363: 'Third Witch',
-        404: 'First Witch', 437: 'Second Witch', 466: 'Third Witch', 485: 'ALL',
-        733: 'DUNCAN'},
-    sorted_offsets=[84, 164, 239, 285, 315, 363, 404, 437, 466, 485, 733])
+	    speaks_offsets={1153: 'Second Witch', 1474: 'ALL', 1393: 'First Witch',
+	    	1352: 'Third Witch', 1228: 'Third Witch', 1455: 'Third Witch',
+	    	1073: 'First Witch', 1426: 'Second Witch', 1304: 'Second Witch',
+	    	1274: 'First Witch', 1722: 'DUNCAN'},
+    sorted_offsets=[1073, 1153, 1228, 1274, 1304, 1352, 1393, 1426, 1455, 1474,
+    	1722])
 
 ]
 
     def test_find_title(self):
         for case_instance in self.case_instances:
-            print 'u'
             title = Preprocessing.find_title(case_instance.text)
             self.assertEquals(title, case_instance.title,
                 'Failed index ' + case_instance.title)
@@ -431,7 +431,10 @@ DUNCAN	What bloody man is that? He can report,
     def test_get_speaks_offsets(self):
         for case_instance in self.case_instances:
             speaks_offsets = Preprocessing.get_speaks_offsets(case_instance.
-                text[case_instance.body_index:])
+                text[case_instance.body_index:],case_instance.body_index)
+            print speaks_offsets
+            print '**************************************'
+            print case_instance.speaks_offsets
             self.assertEquals(speaks_offsets, case_instance.speaks_offsets)
 
     def test_get_character_in_epilog(self):
@@ -446,7 +449,7 @@ DUNCAN	What bloody man is that? He can report,
         speaks_offsets_str = {str(key): value for key, value in test_case.speaks_offsets.iteritems()}
 
         char = Preprocessing.get_character({'0': speaks_offsets_str},
-            {'0' : test_case.sorted_offsets}, 0, 2)
+            {'0' : test_case.sorted_offsets}, 0, 16)
         self.assertEquals('ANA', char)
 
     def test_get_character_for_second_case(self):
@@ -454,15 +457,15 @@ DUNCAN	What bloody man is that? He can report,
         speaks_offsets_str = {str(key): value for key, value in test_case.speaks_offsets.iteritems()}
 
         char = Preprocessing.get_character({'0': speaks_offsets_str},
-            {'0' : test_case.sorted_offsets}, 0, 90)
+            {'0' : test_case.sorted_offsets}, 0, 1197)
         self.assertEquals('SLY', char)
 
         epilog = Preprocessing.get_character({'0': speaks_offsets_str},
-            {'0' : test_case.sorted_offsets}, 0, 50)
+            {'0' : test_case.sorted_offsets}, 0, 1157)
         self.assertEquals('EPILOG', epilog)
 
         hostess = Preprocessing.get_character({'0': speaks_offsets_str},
-            {'0' : test_case.sorted_offsets}, 0, 120)
+            {'0' : test_case.sorted_offsets}, 0, 1227)
         self.assertEquals('Hostess', hostess)
 
     def test_get_character_for_file_without_characters(self):
@@ -472,6 +475,19 @@ DUNCAN	What bloody man is that? He can report,
         epilog = Preprocessing.get_character({'0': speaks_offsets_str},
             {'0' : test_case.sorted_offsets}, 0, 38245)
         self.assertEquals('EPILOG', epilog)
+
+    def test_get_mentions_for_macbeth(self):
+    	test_case = self.case_instances[4]
+        speaks_offsets_str = {str(key): value for key, value in test_case.speaks_offsets.iteritems()}
+
+        char = Preprocessing.get_character({'0': speaks_offsets_str},
+            {'0' : test_case.sorted_offsets}, 0, 1810)
+        self.assertEquals('DUNCAN', char)
+
+        char = Preprocessing.get_character({'0': speaks_offsets_str},
+            {'0' : test_case.sorted_offsets}, 0, 1510)
+        self.assertEquals('ALL', char)
+
 
 if __name__ == '__main__':
     unittest.main()
