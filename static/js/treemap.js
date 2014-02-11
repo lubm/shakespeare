@@ -5,7 +5,14 @@
 google.load('visualization', '1', {packages:['treemap']});
 
 function drawChart(arrayData) {
-    data = google.visualization.arrayToDataTable(arrayData["array"]);
+    array = arrayData['array'];
+    if (array.length == 2) {
+        /* Only the header and the root, no data */
+        $('#treemap').hide();
+        return;
+    }
+    $('#treemap').show();
+    data = google.visualization.arrayToDataTable(array);
     var tree = new google.visualization.TreeMap(document.
         getElementById('treemap'));
     tree.draw(data, {
@@ -15,11 +22,3 @@ function drawChart(arrayData) {
         showScale: true,
         useWeightedAverageForAggregation: false});
 }
-
-$(document).ready(function() {
-    var request = {
-        searched_word: $('#search-value').val()
-    };
-    /* Call for receiving treemap data */
-    $.get('/treemap', request, drawChart);
-});

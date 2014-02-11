@@ -20,3 +20,7 @@ class Character(ndb.Model):
         """Initialize the character with an empty list of mentions."""
         super(Character, self).__init__(*args, **kwargs)
         self.mentions = []
+
+    def get_string_mentions(self):
+        """Get all mentions as strings"""
+        return [mention_key.get().line for mention_key in self.mentions]
