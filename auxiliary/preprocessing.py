@@ -231,7 +231,7 @@ class Preprocessing(object):
 
     @classmethod
     def build_name_to_ind(cls, blobkey):
-        """Build a dictionary that maps filename to index#.
+        """Build a dictionary that maps filename to index.
 
         The dictionary maps the the name of each file inside the zipfile being
         processed to its relative position inside the zipfile.
@@ -273,6 +273,9 @@ def run(blobkey):
     Preprocessing.build_name_to_ind(blobkey)
     pipeline =  PrePipeline(blobkey, Preprocessing.filename_to_ind)
     pipeline.start()
+    logging.info('Starting preprocessing pipeline.')
+    logging.info ('Pipeline information available at %s/status?root=%s',
+                  pipeline.base_path, pipeline.pipeline_id) 
 
 
 class PrePipeline(base_handler.PipelineBase):
@@ -313,6 +316,9 @@ class PrePipeline(base_handler.PipelineBase):
                 Preprocessing.pos_to_character_dicts,
                 Preprocessing.ind_to_sorted_offsets)
         pipeline.start()
+        logging.info('Starting indexing pipeline.')
+        logging.info ('Pipeline information available at %s/status?root=%s',
+                  pipeline.base_path, pipeline.pipeline_id) 
 
 
 class IndexBuild(object):
@@ -423,4 +429,7 @@ class IndexPipeline(base_handler.PipelineBase):
                     }
                 },
                 shards=16)
+
+    def finalized(self):
+        logging.info('Indexing pipeline finished succesfully.')
 
