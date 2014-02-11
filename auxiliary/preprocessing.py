@@ -1,10 +1,10 @@
 """ A module to preprocess Shakespeare's works, gathering metadata."""
-#TODO(izabela): treat files that do not follow the pattern
 
 import logging
 import re
 import zipfile
 import bisect
+import pickle
 
 from google.appengine.ext import blobstore
 from google.appengine.ext import db
@@ -12,58 +12,14 @@ from google.appengine.ext import ndb
 from google.appengine.api import users
 from google.appengine.ext.webapp import blobstore_handlers
 from mapreduce import base_handler
+from mapreduce import context
 from mapreduce import mapreduce_pipeline
 
 from models.character import Character
+from models.line import Line
+from models.file_metadata import FileMetadata
 from models.word import Word
 from models.work import Work
-
-class FileMetadata(db.Model):
-    """A helper class that will hold metadata for the user's blobs.
-
-    Specifially, we want to keep track of who uploaded it, where they uploaded
-    it from (right now they can only upload from their computer, but in the
-    future urlfetch would be nice to add), and links to the results of their MR
-    jobs. To enable our querying to scan over our input data, we store keys in
-    the form 'user/date/blob_key', where 'user' is the given user's e-mail
-    address, 'date' is the date and time that they uploaded the item on, and
-    'blob_key' indicates the location in the Blobstore that the item can be
-    found at. '/' is not the actual separator between these values - we use '..'
-    since it is an illegal set of characters for an e-mail address to contain.
-    """
-
-    __SEP = '..'
-    __NEXT = './'
-
-    owner = db.UserProperty()
-    filename = db.StringProperty()
-    uploaded_on = db.DateTimeProperty()
-    source = db.StringProperty()
-    blobkey = db.StringProperty()
-    index_link = db.StringProperty()
-
-
-    @staticmethod
-    def get_key_name(username, date, blob_key):
-        """Returns the internal key for a particular item in the database.
-
-        Our items are stored with keys of the form 'user/date/blob_key' ('/' is
-        not the real separator, but __SEP is).
-
-        Args:
-            username: The given user's e-mail address.
-            date: A datetime object representing the date and time that an input
-                file was uploaded to this app.
-            blob_key: The blob key corresponding to the location of the input
-                file in the Blobstore.
-        Returns:
-            The internal key for the item specified by
-                (username, date, blob_key).
-        """
-
-        sep = FileMetadata.__SEP
-        return str(username + sep + str(date) + sep + blob_key)
-
 
 
 class FileIndexTooLargeError(Exception):
@@ -102,6 +58,7 @@ class Preprocessing(object):
     pos_to_character_dicts = {}
     ind_to_title = {}
     filename_to_ind = {}
+    ind_to_sorted_offsets = {}
 
     @classmethod
     def get_title(cls, index):
@@ -119,7 +76,7 @@ class Preprocessing(object):
         return cls.ind_to_title[index]
 
     @classmethod
-    def get_character(cls, index, offset):
+    def get_character(cls, char_maps, ind_to_sorted_offsets, index, offset):
         """Get character relative to a line.
 
         Args:
@@ -130,17 +87,17 @@ class Preprocessing(object):
             character: a string with the name of the character or empty string
                 if the line is not pronounced by any character
         """
-        if index >= len(cls.pos_to_character_dicts):
-            raise FileIndexTooLargeError(len(cls.pos_to_character_dicts),
+        if index >= len(char_maps):
+            raise FileIndexTooLargeError(len(char_maps),
                                          index)
-        pos_to_char = cls.pos_to_character_dicts[index]
+        pos_to_char = char_maps[str(index)]
         #Find closest smaller offset in which a character starts a speak
-        sorted_keys = sorted(pos_to_char.keys())
+        sorted_keys = ind_to_sorted_offsets[str(index)]
         aux = bisect.bisect(sorted_keys, offset)
         closest_offset = sorted_keys[aux - 1]
         if closest_offset >= 0:
-            return pos_to_char[closest_offset]
-        return 'META'
+            return pos_to_char[str(closest_offset)]
+        return 'EPILOG'
 
     @staticmethod
     def titlecase(title):
@@ -161,7 +118,7 @@ class Preprocessing(object):
     @staticmethod
     def find_title(text):
         """Get first non-empty line of a text."""
-        title_reg = re.compile(r'\t([A-Z]+.*[A-Z])\s*\n')
+        title_reg = re.compile(r'\t([A-Z0-9]+.*[A-Z])\s*\n')
         title = re.search(title_reg, text).group(1)
         return title
 
@@ -197,6 +154,8 @@ class Preprocessing(object):
         epilog_reg = re.compile(r'.*?\t' + title + '.*?\t' + title + '\s*\n', 
 			flags=re.DOTALL)
         result = re.match(epilog_reg, text)
+        if result == None:
+            return None
         epilog_len = result.span()[1]
         return epilog_len
 
@@ -222,12 +181,16 @@ class Preprocessing(object):
         ind = Preprocessing.get_index(filename)
         text = text_fn()
         title = Preprocessing.find_title(text)
-        Preprocessing.ind_to_title[ind] = Preprocessing.titlecase(title)
         offset = Preprocessing.get_epilog_len(text, title)
-        body = text[offset:]
-        offset_to_char = Preprocessing.get_speaks_offsets(body)
-        for key in offset_to_char:
-            yield ind, str(key) + _SEP + offset_to_char[key]
+        if offset == None:
+            yield str(ind) + _SEP + title, '0' + _SEP + 'None'
+        else:
+            body = text[offset:]
+            offset_to_char = Preprocessing.get_speaks_offsets(body)
+            if len(offset_to_char) == 0:
+                yield str(ind) + _SEP + title, '0' + _SEP + 'None'
+            for key in offset_to_char:
+                yield str(ind) + _SEP + title, str(key) + _SEP + offset_to_char[key]
 
     @staticmethod
     def preprocessing_reduce(key, values):
@@ -242,16 +205,23 @@ class Preprocessing(object):
                 <offset>_SEP<character>
         """
         pos_to_char_dict = {}
+        index, title = key.split(_SEP)
+        if index == '12' or index == '27' or index == '38':
+            print '++++++++++++++++++++++++++++++++'
+            print index
+            print key
+        Preprocessing.ind_to_title[int(index)] = title
         for value in values:
             split = value.split(_SEP)
-            offset = split[0]
-            character = split[1]
+            offset, character = split
             pos_to_char_dict[int(offset)] = character
-        Preprocessing.pos_to_character_dicts[int(key)] = pos_to_char_dict
+        Preprocessing.pos_to_character_dicts[int(index)] = pos_to_char_dict
+        Preprocessing.ind_to_sorted_offsets[int(index)] = \
+            sorted(pos_to_char_dict.keys())
 
     @classmethod
     def build_name_to_ind(cls, blobkey):
-        """Build a dictionary that maps filename to index.
+        """Build a dictionary that maps filename to index#.
 
         The dictionary maps the the name of each file inside the zipfile being
         processed to its relative position inside the zipfile.
@@ -272,10 +242,13 @@ class Preprocessing(object):
             filename: A string containing the name of a file in the zipfile
             being processed.            
         """
-        if filename in cls.filename_to_ind:
-            return cls.filename_to_ind[filename]
-        #TODO(izabela): raise exception
-        return ''
+        ctx = context.get()
+        filename_to_ind = \
+            ctx.mapreduce_spec.mapper.params[u'metadata'][u'filename_to_ind'] 
+        if filename in filename_to_ind:
+            return filename_to_ind[filename]
+        logging.error('PROBLEM: could not find filename in index')
+        return None
 
     @classmethod
     def run(cls, blobkey, filekey):
@@ -287,8 +260,11 @@ class Preprocessing(object):
         cls.pos_to_character_dicts = {}
         cls.ind_to_title = {}
         cls.filename_to_ind = {}
+        cls.ind_to_sorted_offsets = {}
         cls.build_name_to_ind(blobkey)
-        pipeline =  PrePipeline(blobkey, filekey)
+        pipeline =  PrePipeline(blobkey, filekey, Preprocessing.filename_to_ind,
+                Preprocessing.pos_to_character_dicts,
+                Preprocessing.ind_to_sorted_offsets)
         pipeline.start()
     
 
@@ -299,12 +275,15 @@ class PrePipeline(base_handler.PipelineBase):
         blobkey: blobkey to process as string. Should be a zip archive with
             text files inside.
     """
-    def __init__(self, blobkey, filekey):
-        super(PrePipeline, self).__init__(blobkey, filekey)
-        self.blobkey = blobkey
-        self.filekey = filekey
-
-    def run(self, blobkey, filekey):
+    def __init__(self, blobkey, filekey, filename_to_ind, pos_to_char_dicts, 
+            ind_to_sorted_offsets) :
+       super(PrePipeline, self).__init__(blobkey, filekey, filename_to_ind,
+            pos_to_char_dicts, ind_to_sorted_offsets)
+       self.blobkey = blobkey
+       self.filekey = filekey
+ 
+    def run(self, blobkey, filekey, filename_to_ind, pos_to_char_dicts, 
+            ind_to_sorted_offsets):
         """Run the pipeline of the mapreduce job."""
         pipeline = yield mapreduce_pipeline.MapreducePipeline(
                 'preprocessing',
@@ -313,17 +292,23 @@ class PrePipeline(base_handler.PipelineBase):
                 'mapreduce.input_readers.BlobstoreZipInputReader',
                 mapper_params={
                     'input_reader': {
-                        'blob_key': blobkey,
+                        'blob_key': blobkey
                     },
+                    'metadata': {
+                        'filename_to_ind': filename_to_ind,
+                    }
                 },
                 shards=16)
 
     def finalized(self):
         logging.info('Preprocessing finished succesfully')
-        logging.debug(str(Preprocessing.pos_to_character_dicts))
-        logging.debug(str(Preprocessing.ind_to_title))
-        logging.debug(str(Preprocessing.filename_to_ind))
-        pipeline = IndexPipeline(self.filekey, self.blobkey)
+        logging.info(str(Preprocessing.ind_to_title))
+        logging.info(str(Preprocessing.pos_to_character_dicts))
+        logging.info(str(Preprocessing.ind_to_sorted_offsets))
+        pipeline = IndexPipeline(self.filekey, self.blobkey,
+                Preprocessing.ind_to_title,
+                Preprocessing.pos_to_character_dicts,
+                Preprocessing.ind_to_sorted_offsets)
         pipeline.start()
 
 
@@ -351,15 +336,20 @@ def index_map(data):
         separator constant.
     """
     info, line = data
-    logging.info(info)
     _, file_index, offset = info
-    title = Preprocessing.get_title(file_index)
-    character = Preprocessing.get_character(file_index, offset)
-    logging.debug('LINE: %s', line)
-    logging.debug(title)
-    logging.debug(character)
+    ctx = context.get()
+    params = ctx.mapreduce_spec.mapper.params
+    title = params['metadata']['ind_to_title'][str(file_index)]
+    char_maps = params['metadata']['pos_to_char_dicts']
+    ind_to_sorted_offsets = params['metadata']['ind_to_sorted_offsets']
+    character = Preprocessing.get_character(char_maps, ind_to_sorted_offsets,
+            file_index, offset)
+    #print title
+    #print character
+    line_db = Line(line=line)
+    line_key = line_db.put()
     for word in get_words(line.lower()):
-        yield (word + _SEP + title + _SEP + character, line)
+        yield (word + _SEP + title + _SEP + character, pickle.dumps(line_key))
 
 
 def index_reduce(key, values):
@@ -376,17 +366,19 @@ def index_reduce(key, values):
     if not word:
         word = Word(id=word_value, name=word_value)
     
-    work = Work(parent=word.key, id=work_value, title=work_value)
+    work_titlecase = Preprocessing.titlecase(work_value)
+    work = Work(parent=word.key, id=work_titlecase, title=work_titlecase)
 
-    char = Character(parent=work.key, id=char_value, name=char_value)
+    character_titlecase = Preprocessing.titlecase(char_value)
+    char = Character(parent=work.key, id=character_titlecase, 
+        name=character_titlecase)
     
     for line in values:
-        char.mentions.append(line)
+        char.mentions.append(pickle.loads(line))
     
     word.put()
     work.put()
     char.put()
-    yield '%s: %s\n' % (key, list(set(values)))
 
 
 class IndexPipeline(base_handler.PipelineBase):
@@ -396,9 +388,10 @@ class IndexPipeline(base_handler.PipelineBase):
         blobkey: blobkey to process as string. Should be a zip archive with
             text files inside.
     """
-    def run(self, filekey, blobkey):
+    def run(self, filekey, blobkey, ind_to_title, pos_to_char_dicts,
+            ind_to_sorted_offsets):
         """Run the pipeline of the mapreduce job."""
-        output = yield mapreduce_pipeline.MapreducePipeline(
+        yield mapreduce_pipeline.MapreducePipeline(
                 'index',
                 'auxiliary.preprocessing.index_map',
                 'auxiliary.preprocessing.index_reduce',
@@ -408,16 +401,13 @@ class IndexPipeline(base_handler.PipelineBase):
                     'input_reader': {
                         'blob_keys': blobkey,
                     },
-                },
-                reducer_params={
-                    'output_writer': {
-                        'mime_type': 'text/plain',
-                        'output_sharding': 'input',
-                        'filesystem': 'blobstore',
-                    },
+                    'metadata': {
+                        'ind_to_title': ind_to_title,
+                        'pos_to_char_dicts': pos_to_char_dicts,
+                        'ind_to_sorted_offsets': ind_to_sorted_offsets
+                    }
                 },
                 shards=16)
-        yield StoreOutput(filekey, output)
 
 
 class StoreOutput(base_handler.PipelineBase):

@@ -43,6 +43,7 @@ from google.appengine.api import users
 from google.appengine.ext.webapp import blobstore_handlers
 
 from models.character import Character
+from models.line import Line
 from models.word import Word
 from models.work import Work
 from auxiliary.preprocessing import Preprocessing
@@ -109,12 +110,6 @@ class AdminPageController(webapp2.RequestHandler):
         blob_key = self.request.get("blobkey")
 
         Preprocessing.run(blob_key, filekey)
-        #_preprocessing = Preprocessing(blob_key)
-        #_preprocessing.run()
-
-#        pipeline = IndexPipeline(filekey, blob_key)
-        #pipeline.start()
-        #TODO(Caro): put a loading icon in the index link
 
 
 class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
@@ -162,9 +157,9 @@ class ClearDatastoreHandler(webapp2.RequestHandler):
 
     def get(self):
         """Clears the datastore."""
-        #db.delete(db.Query(keys_only=True))
         ndb.delete_multi(Word.query().fetch(keys_only=True))
         ndb.delete_multi(Work.query().fetch(keys_only=True))
         ndb.delete_multi(Character.query().fetch(keys_only=True))
+        ndb.delete_multi(Line.query().fetch(keys_only=True))
         db.delete(FileMetadata.all(keys_only=True).run())
         self.redirect('/admin')
