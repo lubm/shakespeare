@@ -23,7 +23,9 @@ Extensions:
 		If you enter the konami code (up up down down left right left right a b)
 		in the homepage an alert will appear.
 	- We are still working in enabling the user to search by character. We
-		needed to change the database model for this. 
+		changed the database model, but we are still adding the search feature
+		to the UI. The only way were is possible to see the characters rigth now
+		is in the visualization, which we are still refactoring, anyway.
 
 **************************      INPUT FORMAT      **************************
 

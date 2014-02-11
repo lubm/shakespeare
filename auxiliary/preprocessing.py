@@ -72,21 +72,6 @@ class Preprocessing(object):
     filename_to_ind = {}
     ind_to_sorted_offsets = {}
 
-    @classmethod
-    def get_title(cls, index):
-        """Get title of work.
-
-        Args:
-            index: index of file relative to zipfile passed to initializer
-
-        Returns:
-            title: a string with the capitalized title or None if index not
-                found
-        """
-        if index >= len(cls.ind_to_title):
-            raise FileIndexTooLargeError(len(cls.ind_to_title), index)
-        return cls.ind_to_title[index]
-
     @staticmethod
     def get_character(char_maps, ind_to_sorted_offsets, index, offset):
         """Get character relative to a line.
@@ -110,8 +95,7 @@ class Preprocessing(object):
         """
 
         if index >= len(char_maps):
-            raise FileIndexTooLargeError(len(char_maps),
-                                         index)
+            raise FileIndexTooLargeError(len(char_maps), index)
         pos_to_char = char_maps[str(index)]
         #Find closest smaller offset in which a character starts a speak
         sorted_keys = ind_to_sorted_offsets[str(index)]
@@ -147,17 +131,18 @@ class Preprocessing(object):
         return title
 
     @staticmethod
-    def get_speaks_offsets(body):
+    def get_speaks_offsets(body, epilog_len):
         """Find offset in which each character starts to speak.
 
         Args:
             body: A string containing a work without the epilog (the section
                 before the second appearance of the title).
+            epilog_len: The length in bytes of the epilog.
         """
         char_reg = re.compile(r'(^|\n)([A-Z].*)\t')
         offset_to_char = {}
         for match in char_reg.finditer(body):
-            offset = match.start(2)
+            offset = match.start(2) + epilog_len
             character = match.group(2)
             if not re.match('SCENE|ACT', character):
                 offset_to_char[offset] = character
@@ -209,12 +194,12 @@ class Preprocessing(object):
         ind = Preprocessing.get_index(filename)
         text = text_fn()
         title = Preprocessing.find_title(text)
-        offset = Preprocessing.get_epilog_len(text, title)
-        if offset == None:
+        epilog_len = Preprocessing.get_epilog_len(text, title)
+        if epilog_len == None:
             yield str(ind) + _SEP + title, '0' + _SEP + ''
         else:
-            body = text[offset:]
-            offset_to_char = Preprocessing.get_speaks_offsets(body)
+            body = text[epilog_len:]
+            offset_to_char = Preprocessing.get_speaks_offsets(body, epilog_len)
             if len(offset_to_char) == 0:
                 yield str(ind) + _SEP + title, '0' + _SEP + ''
             for key in offset_to_char:
