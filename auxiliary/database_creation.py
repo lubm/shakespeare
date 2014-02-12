@@ -160,13 +160,12 @@ def pre_map(data):
             string.
 
     Yields:
-        ind_and_title, value: ind_and_title is a string of the form
-            <index>_SEP<title> and value is a string of the form
-            <offset>_SEP<character>.
+        ind, value: ind_and_title is a string of the form <index> and value is a
+            string of the form <title_SEP><offset>_SEP<character>.
 
         Example:
 
-            If (2++HAMLET, 100++BERNARNDO) is yielded it means that the
+            If (2, HAMLET++100++BERNARNDO) is yielded it means that the
             second file of the zipfile is entitled 'HAMLET' and at the 100th
             byte there is a speak pronounced by BERNARNDO.
     """
@@ -177,18 +176,18 @@ def pre_map(data):
     title = find_title(text)
     epilog_len = get_epilog_len(text, title)
     if epilog_len == None:
-        yield str(ind) + _SEP + title, '0' + _SEP + ''
+        yield str(ind), title + _SEP + '0' + _SEP + ''
     else:
         body = text[epilog_len:]
         offset_to_char = get_speaks_offsets(body, epilog_len)
         if len(offset_to_char) == 0:
-            yield str(ind) + _SEP + title, '0' + _SEP + ''
+            yield str(ind), title + _SEP + '0' + _SEP + ''
         for key in offset_to_char:
-            yield str(ind) + _SEP + title, str(key) + _SEP + \
+            yield str(ind), title + _SEP + str(key) + _SEP + \
                 offset_to_char[key]
 
 
-def pre_reduce(key, values):
+def pre_reduce(index, values):
     """Reducing function of preprocessing.
 
     It builds a dictionary of dictionaries, indexed by file index. Each
@@ -197,15 +196,13 @@ def pre_reduce(key, values):
     Args:
         key: the index of a file
         values: A list containing elements of the type
-            <offset>_SEP<character>
+            <title>_SEP<offset>_SEP<character>
     """
     pos_to_char_dict = {}
-    index, title = key.split(_SEP)
-    metadata = {'title': title}
     for value in values:
-        split = value.split(_SEP)
-        offset, character = split
+        title, offset, character = value.split(_SEP)
         pos_to_char_dict[int(offset)] = character
+    metadata = {'title': title}
     metadata['pos_to_char'] = pos_to_char_dict
     metadata['sorted_offsets'] = sorted(pos_to_char_dict.keys())
     yield index + _SEP + json.dumps(metadata) + '\n'
@@ -254,8 +251,8 @@ class CreateIndexPipeline(base_handler.PipelineBase):
         """Run the pipeline of the mapreduce job."""
         metadata = yield mapreduce_pipeline.MapreducePipeline(
             'preprocessing',
-            'auxiliary.preprocessing.pre_map',
-            'auxiliary.preprocessing.pre_reduce',
+            'auxiliary.database_creation.pre_map',
+            'auxiliary.database_creation.pre_reduce',
             'mapreduce.input_readers.BlobstoreZipInputReader',
             'mapreduce.output_writers.BlobstoreOutputWriter',
             mapper_params={
@@ -269,15 +266,15 @@ class CreateIndexPipeline(base_handler.PipelineBase):
             reducer_params={
                 'mime_type': 'text/plain'
             },
-            shards=16)
+            shards=42)
         yield mapreduce_pipeline.MapreducePipeline(
             'index',
-            'auxiliary.preprocessing.index_map',
-            'auxiliary.preprocessing.index_reduce',
+            'auxiliary.database_creation.index_map',
+            'auxiliary.database_creation.index_reduce',
             'mapreduce.input_readers.BlobstoreZipLineInputReader',
             'mapreduce.output_writers.BlobstoreOutputWriter',
             mapper_params = (yield MapperParams(blobkey, metadata)),
-            shards=16)
+            shards=42)
 
 
     def finalized(self):
