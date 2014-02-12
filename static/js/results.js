@@ -4,6 +4,9 @@
  * form. */
 
 function getSearchedWord() {
+    /* We get the searched word from the query paramaters in order to avoid the
+    situation in which the user changes the searched word without pressing the
+    button */
     return document.location.search.split('=')[1]; 
 }
 
@@ -52,10 +55,13 @@ function insertMentions(mentions) {
 }
 
 function insertResultsInfo(time, number_results) {
+    /* Insert the time metrics and the number of results to the html */
     $('#results-info').text(number_results + " results (" + time + " seconds)");   
 }
 
 function insertDidYouMean(did_you_mean) {
+    /* If there is a suggestion for the not found word, this function inserts it
+    to the html */
     if (did_you_mean) {
         message = document.createElement('span');
         $(message).text('Did you mean: ');
@@ -106,6 +112,7 @@ function populateWorks(data){
 }
 
 function resultsLoadingStart() {
+    /* Show a loding icon while the results are being retrieved */
     $('#results').hide();
     $('#results').empty();
     $('#results-loading').show();
@@ -124,6 +131,21 @@ function treemapLoadingFinish() {
     $('#treemap-loading').hide();
 }
 
+$(window).load(function() {
+    $('#work-select').change(function() {
+        /* When the user changes the work the list of characters needs to be 
+        reloaded.
+        We call changed in order to change the value of the character and
+        therefore trigger the query to the server. */
+        $('#char-select').val('Any').change();
+    });
+
+    $('#char-select').change(function() {
+        filterByWorkAndCharacter();
+    });
+});
+
+
 function filterByWorkAndCharacter() {
     /* Filter the results of the searched word according to work and character.
      * It does not change the treemap since it is associated only to the word.
@@ -135,7 +157,7 @@ function filterByWorkAndCharacter() {
         work_filter: $('#work-select').find(':selected').text(),
         searched_word: getSearchedWord() 
     };
-    
+
     $.get('/search', request, function(result) {
         insertResults(result);
         resultsLoadingFinish();
