@@ -105,39 +105,55 @@ function populateWorks(data){
     }
 }
 
-function searchRequest(request) {
-    /* Make a request for retrieving results, clearing and hiding the html
-     * element first and displaying loading */
+function resultsLoadingStart() {
     $('#results').hide();
     $('#results').empty();
     $('#results-loading').show();
+}
 
-    $.get('/search', request, insertResults);
-
+function resultsLoadingFinish() {
     $('#results-loading').hide();
     $('#results').show();
+}
+
+function treemapLoadingStart() {
+    $('#treemap-loading').show();
+}
+
+function treemapLoadingFinish() {
+    $('#treemap-loading').hide();
 }
 
 function filterByWorkAndCharacter() {
     /* Filter the results of the searched word according to work and character.
      * It does not change the treemap since it is associated only to the word.
      * */
+    resultsLoadingStart()
+
     var request = {
         char_filter: $('#char-select').find(':selected').text(),
         work_filter: $('#work-select').find(':selected').text(),
         searched_word: getSearchedWord() 
     };
     
-    searchRequest(request);
+    $.get('/search', request, function(result) {
+        insertResults(result);
+        resultsLoadingFinish();
+    });
 }
 
 function loadTreemap() {
     /* Make a request to load the treemap regarding the searched word */
+    
     var request = {
         searched_word: $('#search-value').val()
     };
     
-    $.get('/treemap', request, drawChart);
+    $.get('/treemap', request, function(data) {
+        drawChart(data);
+        treemapLoadingFinish();
+    });
+
 }
 
 
@@ -154,17 +170,24 @@ $(document).ready(function() {
         /* Submit the search word with optional filter arguments */
         event.preventDefault();
 
+        resultsLoadingStart();
+        treemapLoadingStart();
+
         var request = {
             char_filter: 'Any',
             work_filter: 'Any',
             searched_word: getSearchedWord() 
         };
 
-        searchRequest(request);
+        $.get('/search', request, function(result) {
+            insertResults(result);
+            resultsLoadingFinish();
+        });
 
         $.get('/works', request, populateWorks);
 
         loadTreemap();
+
     });
 
     /* The submit is placed at every page reload */

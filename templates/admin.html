@@ -1,37 +1,32 @@
 <html>
   <head>
     <title>Database Administration</title>
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js">
-    </script>
+    <script src="static/js/jquery.min.js"></script>
     <script src="static/js/admin.js" type="text/javascript"></script>
     <script src="static/js/disable_submission_of_empty_inputs.js" 
-      type="text/javascript">
-    </script>
+      type="text/javascript"></script>
   </head>
   <body>
     <h2>Database Administration</h2>
     <h3>Uploaded Files</h3>
     {% if uploaded_length %}
-      <form id="index-form" action="/admin">
-        {% for item in uploaded_items %}
-        <div>
-          <input type="radio" onclick="updateForm('{{ item.key() }}', '{{
-            item.blobkey }}', '{{ item.filename }}');" name="uploaded_file"/> 
-            <a href="/blobstore/{{ item.blobkey }}">{{ item.filename }}</a>
-        </div>
-        {% endfor %}
-        <input type="hidden" name="jobName" id="jobName" value=""/>
-        <input type="hidden" name="filekey" id="filekey" value=""/>
-        <input type="hidden" name="blobkey" id="blobkey" value=""/>
-        <input type="submit" name="index" id="index" value="Index"
-          disabled="disabled"/>
-        <span id="index-message" style="display: none;">
-          <b>The indexing job has started!</b> If you reload the page and the
-          processing is finished, a link for the index will appear in the
-          Indexed Files section.
-        </span>
-      </form>
-      
+    <form id="index-form" action="/admin">
+      {% for item in uploaded_items %}
+      <div>
+        <input type="radio" onclick="updateForm('{{ item.key() }}', '{{
+          item.blobkey }}', '{{ item.filename }}');" name="uploaded_file"/> 
+        <a href="/blobstore/{{ item.blobkey }}">{{ item.filename }}</a>
+      </div>
+      {% endfor %}
+      <input type="hidden" name="jobName" id="jobName" value=""/>
+      <input type="hidden" name="filekey" id="filekey" value=""/>
+      <input type="hidden" name="blobkey" id="blobkey" value=""/>
+      <input type="submit" name="index" id="index" value="Index"
+        disabled="disabled"/>
+      <span id="index-message" style="display: none;">
+        <b>The indexing job has started!</b>
+      </span>
+    </form>
     {% else %}
     <div>No files uploaded and not indexed!</div>
     {% endif %}
@@ -45,7 +40,7 @@
         <tr>
           <td>Give it a name:</td>
           <td><input class="non-nulleable-input" type="textfield" id="name" 
-              name="name"/>
+            name="name"/>
           </td>
         </tr>
       </table>

@@ -44,16 +44,17 @@ def _get_all_word_mentions(word_name):
     """
     all_mentions = {}
     word = Word.get_by_id(word_name)
-    if word:
-        works = Work.query(ancestor=word.key)
-        for work in works:
-            work_chars = Character.query(ancestor=work.key)
-            all_mentions[work.title] = {}
-            for char in work_chars:
-                mentions = char.get_string_mentions()
-                bold_mentions = _bold_mentions(word.name, mentions)
-                all_mentions[work.title][char.name] = bold_mentions
-    return all_mentions
+    if not word:
+        return {}, 0
+    works = Work.query(ancestor=word.key)
+    for work in works:
+        work_chars = Character.query(ancestor=work.key)
+        all_mentions[work.title] = {}
+        for char in work_chars:
+            mentions = char.get_string_mentions()
+            bold_mentions = _bold_mentions(word.name, mentions)
+            all_mentions[work.title][char.name] = bold_mentions
+    return all_mentions, word.count
 
 
 def _get_word_mentions_in_work(word_name, work_title):
@@ -68,19 +69,19 @@ def _get_word_mentions_in_work(word_name, work_title):
         inserted to comply with the data pattern.
     """
 
-    word_db = Word.get_by_id(word_name)
-    if not word_db:
-        return {}
-    work_db = Work.get_by_id(work_title, parent=word_db.key)
-    if not work_db:
-        return {}
-    chars_db = Character.query(ancestor=work_db.key).fetch()
+    word = Word.get_by_id(word_name)
+    if not word:
+        return {}, 0
+    work = Work.get_by_id(work_title, parent=word.key)
+    if not work:
+        return {}, 0
+    chars = Character.query(ancestor=work.key).fetch()
     mentions_dict = {work_title: {}}
-    for char_db in chars_db:
-        mentions = char_db.get_string_mentions()
+    for char in chars:
+        mentions = char.get_string_mentions()
         bold_mentions = _bold_mentions(word_name, mentions)
-        mentions_dict[work_title][char_db.name] = bold_mentions
-    return mentions_dict
+        mentions_dict[work_title][char.name] = bold_mentions
+    return mentions_dict, work.count
 
 
 def _get_word_mentions_by_char(word_name, work_title, char_name):
@@ -97,18 +98,19 @@ def _get_word_mentions_by_char(word_name, work_title, char_name):
         is created in order to comply with the data pattern.
     """
 
-    word_db = Word.get_by_id(word_name)
-    if not word_db:
-        return {}
-    work_db = Work.get_by_id(work_title, parent=word_db.key)
-    if not work_db:
-        return {}
-    char_db = Character.get_by_id(char_name, parent=work_db.key)
-    if not char_db:
-        return {}
-    mentions = char_db.get_string_mentions()
+    word = Word.get_by_id(word_name)
+    if not word:
+        return {}, 0
+    work = Work.get_by_id(work_title, parent=word.key)
+    if not work:
+        return {}, 0
+    char = Character.get_by_id(char_name, parent=work.key)
+    if not char:
+        return {}, 0
+    mentions = char.get_string_mentions()
     bold_mentions = _bold_mentions(word_name, mentions)
-    return {work_title: {char_name: bold_mentions}}
+    mentions_dict = {work_title: {char_name: bold_mentions}}
+    return mentions_dict, char.count
 
 
 def _get_work_characters(word_name, work_title):
@@ -192,29 +194,29 @@ class TreemapHandler(webapp2.RequestHandler):
         """
         searched_value = cgi.escape(self.request.get('searched_word').lower())
 
-        if searched_value:
-            all_mentions = _get_all_word_mentions(searched_value)
+        if not searched_value:
+            return
+        
+        all_mentions, count = _get_all_word_mentions(searched_value)
+        if not count:
+            return
 
-            word_db = Word.get_by_id(searched_value)
-            if not word_db:
-                return
+        treemap_data = [['Location', 'Parent', 'Word Occurrences'],
+            ['Shakespeare\'s Corpus', None, count]]
 
-            treemap_data = [['Location', 'Parent', 'Word Occurrences'],
-                ['Shakespeare\'s Corpus', None, word_db.count]]
+        word_db = Word.get_by_id(searched_value)
+        for work in all_mentions:
+            work_db = Work.get_by_id(work, parent=word_db.key)
+            treemap_data.append([work, 'Shakespeare\'s Corpus', work_db.count]) 
+            for char in all_mentions[work]:
+                if not char:
+                    continue
+                char_db = Character.get_by_id(char, parent=work_db.key)
+                treemap_data.append([{'v': work + '+' + char, 'f': char}, work, 
+                    char_db.count])
 
-            for work in all_mentions:
-                work_db = Work.get_by_id(work, parent=word_db.key)
-                treemap_data.append([work, 'Shakespeare\'s Corpus',
-                    work_db.count]) 
-                for char in all_mentions[work]:
-                    if not char:
-                        continue
-                    char_db = Character.get_by_id(char, parent=work_db.key)
-                    treemap_data.append([{'v': work + '+' + char, 'f': char}, 
-                        work, char_db.count])
-
-            self.response.headers['Content-Type'] = 'text/json'
-            self.response.out.write(json.encode({"array": treemap_data}))
+        self.response.headers['Content-Type'] = 'text/json'
+        self.response.out.write(json.encode({"array": treemap_data}))
 
 
 class CharactersHandler(webapp2.RequestHandler):
@@ -252,23 +254,16 @@ class SearchHandler(webapp2.RequestHandler):
         work_value = self.request.get('work_filter')
         char_value = self.request.get('char_filter')
 
-
-
         start = time.time()
-        word = Word.get_by_id(word_value)
         if work_value == 'Any':
-            mentions = _get_all_word_mentions(word_value)
-            count = word.count if word else 0
+            mentions, count = _get_all_word_mentions(word_value)
         else: 
-            work = Work.get_by_id(work_value, parent=word.key)
             if char_value == 'Any':
-                mentions = _get_word_mentions_in_work(word_value, work_value)
-                count = work.count
+                mentions, count = _get_word_mentions_in_work(word_value, 
+                    work_value)
             else:
-                char = Character.get_by_id(char_value, parent=work.key)
-                mentions = _get_word_mentions_by_char(word_value, work_value,
-                    char_value)
-                count = char.count
+                mentions, count = _get_word_mentions_by_char(word_value, 
+                    work_value, char_value)
         end = time.time()
 
         result = {
