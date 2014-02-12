@@ -48,7 +48,7 @@ from models.line import Line
 from models.word import Word
 from models.work import Work
 from resources.constants import Constants
-from auxiliary as database_creation
+from auxiliary import database_creation
 
 class Parent(db.Model):
     """ A dumb parent class.
