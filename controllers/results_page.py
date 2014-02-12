@@ -30,38 +30,6 @@ def _bold_mentions(word_name, mentions):
         formatter.apply_tag_to_pattern(word_regex, Constants.BOLD_TAG,
             line) for line in mentions]
 
-# TODO(luciana): remove after integration
-def _count_word_dict_values(word_dict):
-    """Counts the amount of mentions after trespassing the hierarchy of the word
-       dict.
-
-    Args:
-        dictionary: a dictionary to count the values.
-
-    Returns:
-        An integer with the amount of values.
-    """
-    count = 0
-    for work in word_dict:
-        for char in word_dict[work]:
-            count += len(word_dict[work][char])
-    return count
-
-# TODO(luciana): remove after integration
-def _count_work_dict_values(work_dict):
-    """Counts the amount of values regarding all keys in a dictionary.
-
-    Args:
-        dictionary: a dictionary to count the values.
-
-    Returns:
-        An integer with the amount of values.
-    """
-    count = 0
-    for char in work_dict:
-        count += len(work_dict[char])
-    return count
-
 
 def _get_all_word_mentions(word_name):
     """Get all the mentions of a certain word string representation accessed
@@ -230,14 +198,17 @@ class TreemapHandler(webapp2.RequestHandler):
             treemap_data = [['Location', 'Parent', 'Word Occurrences'],
                 ['Shakespeare\'s Corpus', None, 0]]
 
+            word_db = Word.get_by_id(searched_value)
             for work in all_mentions:
+                work_db = Work.get_by_id(work, parent=word_db.key)
                 treemap_data.append([work, 'Shakespeare\'s Corpus',
-                    _count_work_dict_values(all_mentions[work])])
+                    work_db.count]) 
                 for char in all_mentions[work]:
-                    if not char or char == 'None': #TODO: Remove last check.
+                    if not char:
                         continue
+                    char_db = Character.get_by_id(char, parent=work_db.key)
                     treemap_data.append([{'v': work + char, 'f': char}, work,
-                        len(all_mentions[work][char])])
+                        char_db.count])
 
             self.response.headers['Content-Type'] = 'text/json'
             self.response.out.write(json.encode({"array": treemap_data}))
