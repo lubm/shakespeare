@@ -25,19 +25,6 @@ from models.work import Work
 _SEP = '+'
 
 
-class FileIndexTooLargeError(Exception):
-    """To be raised when a file index that does not exist is requested."""
-    def __init__(self, num_files, index_requested):
-
-        self.num_files = num_files
-        self.ind_requested = index_requested
-        Exception.__init__(self, self.__repr__())
-
-    def __str__(self):
-        return '''Preprocessing only identified %d files in zipfile and %d file
-            index was requested.''' % (self.num_files, self.ind_requested)
-
-
 def run(blobkey):
     """Run mapreduce pipelines to build the word index.
     
@@ -314,6 +301,27 @@ def get_words(line):
     return line.split()
 
 
+def select_metadata(all_metadata, file_index):
+    """"Select metadata of respective file index among all metadata.
+    
+    Args:
+        all_metadata: A list of strings in the format <index>_SEP<serial_dict>,
+        in which <serial_dict> is a serialized dictionary containing all the
+        metadata associated to <index>.
+    
+    Returns:  The respective dict desirialized.
+    """
+    metadata = None
+    for data in all_metadata:
+        index, serial_dict = data.split(_SEP)
+        if index == str(file_index):
+            metadata = json.loads(serial_dict)
+            break
+    if metadata == None:
+        logging.error('File index not found in metadata dictionary.')
+    return metadata
+
+
 def index_map(data):
     """Index map function.
 
@@ -336,12 +344,8 @@ def index_map(data):
     params = ctx.mapreduce_spec.mapper.params
     metadata_blob = params['metadata']
     blob_reader = blobstore.BlobReader(metadata_blob[0].split('/')[-1])
-    files_info = blob_reader.read().split('\n')[:-1] # the last one is empty
-    for info in files_info:
-        index, serial_dict = info.split(_SEP)
-        if index == str(file_index):
-            metadata = json.loads(serial_dict)
-            break
+    all_meta = blob_reader.read().split('\n')[:-1] # the last one is empty
+    metadata = select_metadata(all_meta, file_index)
     char_map = metadata['pos_to_char']
     sorted_offsets = metadata['sorted_offsets']
     character = get_character(char_map, sorted_offsets, offset)
