@@ -179,3 +179,7 @@
     padding: 10px;
     background: #ddd;
 }
+
+.navbar-header {
+  float: none;
+}
