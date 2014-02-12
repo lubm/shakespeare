@@ -14,4 +14,13 @@ $(window).load(function() {
         $('#show-results').parent().addClass('active');
         $('#show-visualization').parent().removeClass('active');
     });
+
+    $('#show-filters').hover(
+        function() {
+            $(this).addClass('btn-no-padding');
+        }, 
+        function () {
+            $(this).removeClass('btn-no-padding');
+        }
+    );
 });
