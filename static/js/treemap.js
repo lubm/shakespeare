@@ -23,7 +23,7 @@ function drawChart(arrayData) {
             name = name.split('+')[1]; 
         }
         return '<p><b>' + name + '</b></p>' + 
-            '<p>' + size + ' results.</p>';
+            '<p>' + size + ' results</p>';
 
     };
 

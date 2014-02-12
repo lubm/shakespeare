@@ -29,4 +29,4 @@ class Character(ndb.Model):
 
     def get_string_mentions(self):
         """Get all mentions as strings"""
-        return [mention_key.get().line for mention_key in self.mentions]
+        return [mention.line for mention in ndb.get_multi(self.mentions)]
