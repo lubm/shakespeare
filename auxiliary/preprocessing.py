@@ -323,7 +323,7 @@ class PrePipeline(base_handler.PipelineBase):
 
 
     def finalized(self):
-        logging.info('********** Preprocessing finished succesfully :) ***********')
+        logging.info('********** Index built succesfully :) ***********')
 
 class MapperParams(base_handler.PipelineBase):
     
@@ -364,6 +364,8 @@ class IndexBuild(object):
             returned. _SEP is a separator constant.
         """
         info, line = data
+        if line.strip() == '':
+            return
         _, file_index, offset = info
         ctx = context.get()
         params = ctx.mapreduce_spec.mapper.params
