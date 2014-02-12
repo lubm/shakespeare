@@ -5,13 +5,14 @@ import webapp2
 import time
 from webapp2_extras import json
 
-import auxiliary.formatter as formatter
+from google.appengine.ext import ndb
 
 from models.character import Character
 from models.word import Word
 from models.work import Work
 from resources.constants import Constants
 import auxiliary.spelling_corrector as spelling_corrector
+import auxiliary.formatter as formatter
 
 
 def _bold_mentions(word_name, mentions):
@@ -46,9 +47,9 @@ def _get_all_word_mentions(word_name):
     word = Word.get_by_id(word_name)
     if not word:
         return {}, 0
-    works = Work.query(ancestor=word.key)
+    works = ndb.get_multi(word.works)
     for work in works:
-        work_chars = Character.query(ancestor=work.key)
+        work_chars = ndb.get_multi(work.characters)
         all_mentions[work.title] = {}
         for char in work_chars:
             mentions = char.get_string_mentions()
@@ -72,10 +73,10 @@ def _get_word_mentions_in_work(word_name, work_title):
     word = Word.get_by_id(word_name)
     if not word:
         return {}, 0
-    work = Work.get_by_id(work_title, parent=word.key)
+    work = Work.get_by_id(word_name + work_title)
     if not work:
         return {}, 0
-    chars = Character.query(ancestor=work.key).fetch()
+    chars = ndb.get_multi(work.characters)
     mentions_dict = {work_title: {}}
     for char in chars:
         mentions = char.get_string_mentions()
@@ -101,10 +102,10 @@ def _get_word_mentions_by_char(word_name, work_title, char_name):
     word = Word.get_by_id(word_name)
     if not word:
         return {}, 0
-    work = Work.get_by_id(work_title, parent=word.key)
+    work = Work.get_by_id(word_name + work_title)
     if not work:
         return {}, 0
-    char = Character.get_by_id(char_name, parent=work.key)
+    char = Character.get_by_id(word_name + work_title + char_name)
     if not char:
         return {}, 0
     mentions = char.get_string_mentions()
@@ -125,14 +126,14 @@ def _get_work_characters(word_name, work_title):
         A list with the names of the characters.
     """
 
-    word_db = Word.get_by_id(word_name)
-    if not word_db:
+    word = Word.get_by_id(word_name)
+    if not word:
         return []
-    work_db = Work.get_by_id(work_title, parent=word_db.key)
-    if not work_db:
+    work = Work.get_by_id(word_name + work_title)
+    if not work:
         return []
-    char_names = [char_db.name for char_db in
-        Character.query(ancestor=work_db.key).fetch()]
+    chars = ndb.get_multi(work.characters)
+    char_names = [char.name for char in chars]
     return char_names
 
 
@@ -146,11 +147,11 @@ def _get_word_works(word_name):
         A list with the titles of the works.
     """
 
-    word_db = Word.get_by_id(word_name)
-    if not word_db:
+    word = Word.get_by_id(word_name)
+    if not word:
         return []
-    work_titles = [work_db.title for work_db in
-        Work.query(ancestor=word_db.key).fetch()]
+    works = ndb.get_multi(word.works)
+    work_titles = [work.title for work in works] 
     return work_titles
 
 

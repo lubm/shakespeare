@@ -369,23 +369,27 @@ def index_reduce(key, values):
     word_value, work_value, char_value = keys
     word = Word.get_by_id(word_value)
     work_titlecase = titlecase(work_value)
-    if not word:
-        word = Word(id=word_value, name=word_value, count=len(values))
-        work = Work(parent=word.key, id=work_titlecase,
-                        title=work_titlecase, count=len(values))
-    else:
-        word.count += len(values)
-        work = Work.get_by_id(work_titlecase, parent=word.key)
-        if work:
-            work.count += len(values)
-        else:
-            work = Work(parent=word.key, id=work_titlecase,
-                title=work_titlecase, count=len(values))
     character_titlecase = titlecase(char_value)
-    char = Character(parent=work.key, id=character_titlecase,
-        name=character_titlecase, count= len(values))
-    for line in set(values):
-        char.mentions.append(pickle.loads(line))
+    work = None
+    
+    if word:
+        word.count += len(values)
+        work = Work.get_by_id(word_value + work_titlecase)
+    else:
+        word = Word(id=word_value, name=word_value, count=len(values))
+
+    if work:
+        work.count += len(values)
+    else:
+        work = Work(id=word_value + work_titlecase, title=work_titlecase, 
+            count=len(values))
+        word.works.append(work.key)
+    
+    char = Character(id=word_value + work_titlecase + character_titlecase,
+        name=character_titlecase, count=len(values))
+    work.characters.append(char.key)
+    char.mentions = [pickle.loads(like_key) for like_key in set(values)]
+    
     word.put()
     work.put()
     char.put()

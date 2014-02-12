@@ -25,7 +25,11 @@ handlers:
 - url: /blobstore/.*
   script: controllers.main.APP
   login: admin
-  
+
+- url: /gaeadmin
+  script: $PYTHON_LIB/google/appengine/ext/admin
+  login: admin
+
 - url: /.*
   script: controllers.main.APP
 
