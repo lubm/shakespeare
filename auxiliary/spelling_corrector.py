@@ -26,8 +26,8 @@ def get_suggestion(word):
     '''
     if Word.get_by_id(word):
         return None
-    
-    candidates = _get_candidates(_words_edit_distance_one(word))
+
+    candidates = _select_valid_words(_words_edit_distance_one(word))
     best_count = 0
     suggestion = None
     for candidate in candidates:
@@ -103,10 +103,14 @@ def _words_edit_distance_one(word):
 
     return set(deletes + transposes + replaces + inserts)
 
-def _get_candidates(words):
+def _select_valid_words(words):
     '''Given all the words at distance 1 filters the words that are not present
-    in the database and therefore not valid.'''
+    in the database and therefore not valid.
+
+    Get multi returns None for the words that are not found, so we need to 
+    filter them
+    '''
     candidate_keys = [ndb.Key(Word, word) for word in words]
     found_words_with_nones = ndb.get_multi(candidate_keys)
 
-    return [word for word in found_words_with_nones if word!=None]
+    return [word for word in found_words_with_nones if word != None]
