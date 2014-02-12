@@ -278,19 +278,27 @@ class SearchHandler(webapp2.RequestHandler):
         work_value = self.request.get('work_filter')
         char_value = self.request.get('char_filter')
 
+
         start = time.time()
+        word = Word.get_by_id(word_value)
         if work_value == 'Any':
             mentions = _get_all_word_mentions(word_value)
-        elif char_value == 'Any':
-            mentions = _get_word_mentions_in_work(word_value, work_value)
-        else:
-            mentions = _get_word_mentions_by_char(word_value, work_value,
-                char_value)
+            count = word.count if word else 0
+        else: 
+            work = Work.get_by_id(work_value, parent=word.key)
+            if char_value == 'Any':
+                mentions = _get_word_mentions_in_work(word_value, work_value)
+                count = work.count
+            else:
+                char = Character.get_by_id(char_value, parent=work.key)
+                mentions = _get_word_mentions_by_char(word_value, work_value,
+                    char_value)
+                count = char.count
         end = time.time()
 
         result = {
             'mentions': mentions,
-            'number_results': _count_word_dict_values(mentions),
+            'number_results': count,
             'time': round(end - start, 4),
             'did_you_mean': spelling_corrector.get_suggestion(word_value)
         }

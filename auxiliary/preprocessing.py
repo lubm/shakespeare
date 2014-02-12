@@ -395,7 +395,7 @@ class IndexBuild(object):
         character_titlecase = Preprocessing.titlecase(char_value)
         char = Character(parent=work.key, id=character_titlecase,
             name=character_titlecase, count= len(values))
-        for line in values:
+        for line in set(values):
             char.mentions.append(pickle.loads(line))
         word.put()
         work.put()
