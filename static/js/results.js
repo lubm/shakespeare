@@ -63,15 +63,10 @@ function insertDidYouMean(did_you_mean) {
     /* If there is a suggestion for the not found word, this function inserts it
     to the html */
     if (did_you_mean) {
-        message = document.createElement('span');
-        $(message).text('Did you mean: ');
-        $(message).addClass('google-red');
-        suggestion = document.createElement('a');
-        suggestion.href = '/results?searched_word=' + did_you_mean;
-        $(suggestion).text(did_you_mean);
-        $(suggestion).css('font-style', 'bold italic');
-        $('#did-you-mean').append(message);
-        $('#did-you-mean').append(suggestion);
+        $('#did-you-mean-sugg').attr('href', '/results?searched_word=' + 
+            did_you_mean);
+        $('#did-you-mean-sugg').text(did_you_mean);
+        $('#did-you-mean').show();
     }
 }
 

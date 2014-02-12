@@ -71,28 +71,26 @@
 
             <br/>
 
-            <div class="stats harlem-shake" id="results-info" data-animation="flipInX" data-animation-speed="slow"> 
+            <div class="stats harlem-shake" id="results-info" data-animation="flipInX" data-animation-speed="slow"></div>
+            <div id="did-you-mean" class="harlem-shake" data-animation="wiggle"
+                style="display: none;">
+                <span class="google-red">Did you mean: </span>
+                <b><em><a id="did-you-mean-sugg"></a></em></b>
             </div>
-
-            <div id="did-you-mean" class="harlem-shake" data-animation="wiggle">
-            </div>
-
-            <div id="results" class="row">
-              <div class="results-loading">Loading...</div>
-            </div>
+            <div id="results" class="row"></div>
+            <div id="results-loading" class="row"><em>Loading...</em></div>
           </div>
 
           <div class="col-md-4 box harlem-shake" data-animation="swing" id="word-definition">
             <h3 class="harlem-shake" data-animation="bounce">{{ searched_word }}'s definition:</h3>
-            <p id='definition'><i id='loading_message'>Loading...</i></p>
+            <p id='definition'><em id='loading_message'>Loading...</em></p>
           </div>
-        
+
         </div>
-
-
 
         <div id='visualization-tab-content' class="col-md-12">
           <div class="row">
+              <div id="treemap-loading" style="display: none;"><em>Loading...</em></div>  
             {% if works %}
             <div id="treemap" class="harlem-shake" data-animation="flipOutX"></div>
             {% else %}

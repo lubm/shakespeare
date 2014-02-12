@@ -12,13 +12,11 @@ google.load('visualization', '1', {packages:['treemap', 'controls']});
 function drawChart(arrayData) {
     array = arrayData['array'];
     if (!array || array.length == 2) {
-        /* Only the header and the root, no data */
+        // Only the header and the root, no data
         return;
     }
     $('#treemap').show();
- 
     data = google.visualization.arrayToDataTable(array);
-
     function setNodeValues(dt, row) {
         var childRows = dt.getFilteredRows([{
             column: 1,
@@ -26,17 +24,14 @@ function drawChart(arrayData) {
         if (childRows.length > 0) {
             // this is a parent, recurse down, and set value when w
             var vals = [];
-            var colors = [];
             var tmp;
             for (var i = 0; i < childRows.length; i++) {
                 tmp = setNodeValues(dt, childRows[i]);
                 vals.push(tmp.val);
-                colors.push(tmp.color);
             }
             dt.setValue(row, 2, google.visualization.data.sum(vals));
             return {
-                val: google.visualization.data.sum(vals),
-                color: google.visualization.data.sum(colors)
+                val: google.visualization.data.sum(vals)
             };
         }
         else {
@@ -46,10 +41,9 @@ function drawChart(arrayData) {
             }
         }
     }
-
-    // parse the DataTable and build data for parent nodes
+    
     setNodeValues(data, 0);
-
+    
     // identify all rows necessary for the tree at a given parent node
     function getRowsForNode(dt, row) {
         return [row].concat(dt.getFilteredRows([{
@@ -62,7 +56,7 @@ function drawChart(arrayData) {
     view.setRows(getRowsForNode(data, 0));
             
     displayTooltip = function (row, size, value) {
-        name = data.getValue(row, 0);
+        name = view.getValue(row, 0);
         if (name.indexOf('+') != -1) {
             /* Characters */
             name = name.split('+')[1]; 
@@ -72,7 +66,6 @@ function drawChart(arrayData) {
 
     };
 
-    // Create a ChartWrapper for the visualization
     var treemap = new google.visualization.ChartWrapper({
         chartType: 'TreeMap',
         containerId: 'treemap',
