@@ -84,25 +84,15 @@ class AdminPageController(webapp2.RequestHandler):
         results_query.ancestor(_PARENT)
 
         items = [result for result in results_query]
-        indexed_items = []
-        uploaded_items = []
-        for item in items:
-            if item.index_link:
-                indexed_items.append(item)
-            else:
-                uploaded_items.append(item)
-        indexed_length = len(indexed_items)
-        uploaded_length = len(uploaded_items)
+        length = len(items)
 
         upload_url = blobstore.create_upload_url('/upload')
 
         self.response.out.write(self.template_env.get_template(
             "admin.html").render(
                 {"username": 'admin',
-                  "indexed_items": indexed_items,
-                  "uploaded_items": uploaded_items,
-                  "indexed_length": indexed_length,
-                  "uploaded_length": uploaded_length,
+                  "uploaded_items": items,
+                  "uploaded_length": length,
                   "upload_url": upload_url}))
 
     def post(self):
