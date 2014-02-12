@@ -8,25 +8,36 @@ google.load('visualization', '1', {packages:['treemap']});
 
 function drawChart(arrayData) {
     array = arrayData['array'];
-    if (array.length == 2) {
+    if (!array || array.length == 2) {
         /* Only the header and the root, no data */
-//       message = document.createElement('p');
-//        $(message).append(document.createTextNode('No results found for '));
-//        word = document.createElement('span');
-//        $(word).text(getSearchedWord());
-//        $(word).attr('style', 'font-style: italic;');
-//        $(message).append(word);
-//        $('#treemap').before(message);
         return;
     }
+
     $('#treemap').show();
     data = google.visualization.arrayToDataTable(array);
+    
+    displayTooltip = function (row, size, value) {
+        name = data.getValue(row, 0);
+        if (name.indexOf('+') != -1) {
+            /* Characters */
+            name = name.split('+')[1]; 
+        }
+        return '<p><b>' + name + '</b></p>' + 
+            '<p>' + size + ' results.</p>';
+
+    };
+
     var tree = new google.visualization.TreeMap(document.
         getElementById('treemap'));
     tree.draw(data, {
         minColor: '#709EC1',
         maxColor: '#B94949',
         fontColor: 'black',
+        fontSize: '16',
+        fontFamily: 'Helvetica Neue',
         showScale: true,
-        useWeightedAverageForAggregation: false});
+        useWeightedAverageForAggregation: false,
+        generateTooltip: displayTooltip
+    });
+
 }

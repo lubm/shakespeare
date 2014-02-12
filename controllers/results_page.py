@@ -195,10 +195,13 @@ class TreemapHandler(webapp2.RequestHandler):
         if searched_value:
             all_mentions = _get_all_word_mentions(searched_value)
 
-            treemap_data = [['Location', 'Parent', 'Word Occurrences'],
-                ['Shakespeare\'s Corpus', None, 0]]
-
             word_db = Word.get_by_id(searched_value)
+            if not word_db:
+                return
+
+            treemap_data = [['Location', 'Parent', 'Word Occurrences'],
+                ['Shakespeare\'s Corpus', None, word_db.count]]
+
             for work in all_mentions:
                 work_db = Work.get_by_id(work, parent=word_db.key)
                 treemap_data.append([work, 'Shakespeare\'s Corpus',
@@ -207,8 +210,8 @@ class TreemapHandler(webapp2.RequestHandler):
                     if not char:
                         continue
                     char_db = Character.get_by_id(char, parent=work_db.key)
-                    treemap_data.append([{'v': work + char, 'f': char}, work,
-                        char_db.count])
+                    treemap_data.append([{'v': work + '+' + char, 'f': char}, 
+                        work, char_db.count])
 
             self.response.headers['Content-Type'] = 'text/json'
             self.response.out.write(json.encode({"array": treemap_data}))
@@ -248,6 +251,7 @@ class SearchHandler(webapp2.RequestHandler):
         word_value = cgi.escape(self.request.get('searched_word').lower())
         work_value = self.request.get('work_filter')
         char_value = self.request.get('char_filter')
+
 
 
         start = time.time()
