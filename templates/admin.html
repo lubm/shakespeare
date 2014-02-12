@@ -10,18 +10,6 @@
   </head>
   <body>
     <h2>Database Administration</h2>
-    <h3>Indexed Files</h3>
-    {% if indexed_length %}
-    <ul>
-      {% for item in indexed_items %}
-      <li>
-        <a href="/blobstore/{{ item.blobkey }}">{{ item.filename }}</a>
-      </li>
-      {% endfor %}
-    </ul>
-    {% else %}
-    <div>No files indexed yet!</div>
-    {% endif %}
     <h3>Uploaded Files</h3>
     {% if uploaded_length %}
       <form id="index-form" action="/admin">
