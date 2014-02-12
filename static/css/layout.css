@@ -168,7 +168,7 @@
   margin: 0px;
 }
 
-.form-control {
+.filter-options {
   width: auto;
   display: inline;
   margin: 3px;
@@ -178,4 +178,8 @@
     z-index: 1;
     padding: 10px;
     background: #ddd;
+}
+
+.navbar-header {
+  float: none;
 }

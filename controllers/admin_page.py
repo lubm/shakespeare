@@ -47,9 +47,8 @@ from models.file_metadata import FileMetadata
 from models.line import Line
 from models.word import Word
 from models.work import Work
-from auxiliary.preprocessing import Preprocessing
 from resources.constants import Constants
-import auxiliary.preprocessing as database_creation
+from auxiliary import database_creation
 
 class Parent(db.Model):
     """ A dumb parent class.
