@@ -6,6 +6,7 @@
 import logging
 import re
 import zipfile
+import json
 import bisect
 import pickle
 
@@ -13,6 +14,7 @@ from google.appengine.ext import blobstore
 from mapreduce import base_handler
 from mapreduce import context
 from mapreduce import mapreduce_pipeline
+from mapreduce.lib import pipeline
 
 from models.character import Character
 from models.line import Line
@@ -73,7 +75,7 @@ class Preprocessing(object):
     ind_to_sorted_offsets = {}
 
     @staticmethod
-    def get_character(char_maps, ind_to_sorted_offsets, index, offset):
+    def get_character(char_map, sorted_offsets, offset):
         """Get character relative to a line.
 
         Args:
@@ -94,17 +96,11 @@ class Preprocessing(object):
             returned.
         """
 
-        if index >= len(char_maps):
-            raise FileIndexTooLargeError(len(char_maps), index)
-        pos_to_char = char_maps[str(index)]
         #Find closest smaller offset in which a character starts a speak
-        sorted_keys = ind_to_sorted_offsets[str(index)]
-        aux = bisect.bisect(sorted_keys, offset) - 1
-
+        aux = bisect.bisect(sorted_offsets, offset) - 1
         if aux >= 0:
-            closest_offset = sorted_keys[aux]
-            return pos_to_char[str(closest_offset)]
-
+            closest_offset = sorted_offsets[aux]
+            return char_map[str(closest_offset)]
         return 'EPILOG'
 
     @staticmethod
@@ -220,14 +216,19 @@ class Preprocessing(object):
         """
         pos_to_char_dict = {}
         index, title = key.split(_SEP)
-        Preprocessing.ind_to_title[int(index)] = title
+        metadata = {'title': title}
+        #Preprocessing.ind_to_title[int(index)] = title
         for value in values:
             split = value.split(_SEP)
             offset, character = split
             pos_to_char_dict[int(offset)] = character
-        Preprocessing.pos_to_character_dicts[int(index)] = pos_to_char_dict
-        Preprocessing.ind_to_sorted_offsets[int(index)] = \
-            sorted(pos_to_char_dict.keys())
+        #Preprocessing.pos_to_character_dicts[int(index)] = pos_to_char_dict
+        metadata['pos_to_char'] = pos_to_char_dict
+        metadata['sorted_offsets'] = sorted(pos_to_char_dict.keys())
+        #Preprocessing.ind_to_sorted_offsets[int(index)] = \
+            #sorted(pos_to_char_dict.keys())\
+        yield index + _SEP + json.dumps(metadata) + '\n'
+
 
     @classmethod
     def build_name_to_ind(cls, blobkey):
@@ -291,11 +292,12 @@ class PrePipeline(base_handler.PipelineBase):
 
     def run(self, blobkey, filename_to_ind):
         """Run the pipeline of the mapreduce job."""
-        yield mapreduce_pipeline.MapreducePipeline(
+        metadata = yield mapreduce_pipeline.MapreducePipeline(
             'preprocessing',
             'auxiliary.preprocessing.Preprocessing.map',
             'auxiliary.preprocessing.Preprocessing.reduce',
             'mapreduce.input_readers.BlobstoreZipInputReader',
+            'mapreduce.output_writers.BlobstoreOutputWriter',
             mapper_params={
                 'input_reader': {
                     'blob_key': blobkey
@@ -304,21 +306,29 @@ class PrePipeline(base_handler.PipelineBase):
                     'filename_to_ind': filename_to_ind,
                 }
             },
+            reducer_params={
+                'mime_type': 'text/plain'
+            },
+            shards=16)
+        #with pipeline.After(metadata):
+        #yield StoreOutput("Phrases", filekey, output)
+        yield mapreduce_pipeline.MapreducePipeline(
+            'index',
+            'auxiliary.preprocessing.IndexBuild.map',
+            'auxiliary.preprocessing.IndexBuild.reduce',
+            'mapreduce.input_readers.BlobstoreZipLineInputReader',
+            'mapreduce.output_writers.BlobstoreOutputWriter',
+            mapper_params = (yield MapperParams(blobkey, metadata)),
             shards=16)
 
+
     def finalized(self):
-        logging.info('Preprocessing finished succesfully')
-        logging.debug(str(Preprocessing.ind_to_title))
-        logging.debug(str(Preprocessing.pos_to_character_dicts))
-        logging.debug(str(Preprocessing.ind_to_sorted_offsets))
-        pipeline = IndexPipeline(self.blobkey,
-                Preprocessing.ind_to_title,
-                Preprocessing.pos_to_character_dicts,
-                Preprocessing.ind_to_sorted_offsets)
-        pipeline.start()
-        logging.info('Starting indexing pipeline.')
-        logging.info ('Pipeline information available at %s/status?root=%s',
-                  pipeline.base_path, pipeline.pipeline_id) 
+        logging.info('********** Preprocessing finished succesfully :) ***********')
+
+class MapperParams(base_handler.PipelineBase):
+    
+    def run(self, blobkey, metadata):
+        return {'input_reader': {'blob_keys': blobkey}, 'metadata': metadata}
 
 
 class IndexBuild(object):
@@ -357,11 +367,19 @@ class IndexBuild(object):
         _, file_index, offset = info
         ctx = context.get()
         params = ctx.mapreduce_spec.mapper.params
-        title = params['metadata']['ind_to_title'][str(file_index)]
-        char_maps = params['metadata']['pos_to_char_dicts']
-        ind_to_sorted_offsets = params['metadata']['ind_to_sorted_offsets']
-        character = Preprocessing.get_character(char_maps,
-                        ind_to_sorted_offsets, file_index, offset)
+        metadata_blob = params['metadata']
+        blob_reader = blobstore.BlobReader(metadata_blob[0].split('/')[-1])
+        files_info = blob_reader.read().split('\n')[:-1] # the last one is empty
+        for info in files_info:
+            index, serial_dict = info.split(_SEP)
+            if index == str(file_index):
+                metadata = json.loads(serial_dict)
+                break
+        char_map = metadata['pos_to_char']
+        sorted_offsets = metadata['sorted_offsets']
+        character = Preprocessing.get_character(char_map, sorted_offsets,
+                                                offset)
+        title = metadata['title']
         line_db = Line(line=line)
         line_key = line_db.put()
         for word in IndexBuild.get_words(line.lower()):
