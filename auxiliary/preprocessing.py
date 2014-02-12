@@ -91,9 +91,9 @@ class Preprocessing(object):
             character: a string with the name of the character or 'EPILOG' if
             the line is part of the epilog.
 
-        TODO(izabela): fix behavior for lines that indicate stage behavior.
-            Right now the previous character who pronounced anything is
-            returned.
+        TODO(izabela): fix behavior for lines that indicate stage behavior of
+            characters. Right now the previous character who pronounced anything
+            is returned.
         """
 
         #Find closest smaller offset in which a character starts a speak
@@ -217,16 +217,12 @@ class Preprocessing(object):
         pos_to_char_dict = {}
         index, title = key.split(_SEP)
         metadata = {'title': title}
-        #Preprocessing.ind_to_title[int(index)] = title
         for value in values:
             split = value.split(_SEP)
             offset, character = split
             pos_to_char_dict[int(offset)] = character
-        #Preprocessing.pos_to_character_dicts[int(index)] = pos_to_char_dict
         metadata['pos_to_char'] = pos_to_char_dict
         metadata['sorted_offsets'] = sorted(pos_to_char_dict.keys())
-        #Preprocessing.ind_to_sorted_offsets[int(index)] = \
-            #sorted(pos_to_char_dict.keys())\
         yield index + _SEP + json.dumps(metadata) + '\n'
 
 
@@ -323,7 +319,7 @@ class PrePipeline(base_handler.PipelineBase):
 
 
     def finalized(self):
-        logging.info('********** Index built succesfully :) ***********')
+        logging.info('*********** Index built succesfully  ***********')
 
 class MapperParams(base_handler.PipelineBase):
     
@@ -420,36 +416,4 @@ class IndexBuild(object):
         word.put()
         work.put()
         char.put()
-
-
-class IndexPipeline(base_handler.PipelineBase):
-    """A pipeline to run Index.
-
-    Args:
-        blobkey: blobkey to process as string. Should be a zip archive with
-            text files inside.
-    """
-    def run(self, blobkey, ind_to_title, pos_to_char_dicts,
-            ind_to_sorted_offsets):
-        """Run the pipeline of the mapreduce job."""
-        yield mapreduce_pipeline.MapreducePipeline(
-                'index',
-                'auxiliary.preprocessing.IndexBuild.map',
-                'auxiliary.preprocessing.IndexBuild.reduce',
-                'mapreduce.input_readers.BlobstoreZipLineInputReader',
-                'mapreduce.output_writers.BlobstoreOutputWriter',
-                mapper_params={
-                    'input_reader': {
-                        'blob_keys': blobkey,
-                    },
-                    'metadata': {
-                        'ind_to_title': ind_to_title,
-                        'pos_to_char_dicts': pos_to_char_dicts,
-                        'ind_to_sorted_offsets': ind_to_sorted_offsets
-                    }
-                },
-                shards=16)
-
-    def finalized(self):
-        logging.info('Indexing pipeline finished succesfully.')
 
