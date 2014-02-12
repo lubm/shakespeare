@@ -2,6 +2,7 @@ $(window).load(function() {
     $('#visualization-tab-content').css('visibility', 'hidden');
     
     $('#show-visualization').click(function() {
+        $('#filter').css('display', 'none');
         $('#result-tab-content').css('display', 'none');
         $('#visualization-tab-content').css('visibility', 'visible');
         $('#show-visualization').parent().addClass('active');
@@ -9,18 +10,21 @@ $(window).load(function() {
     });
 
     $('#show-results').click(function() {
+        $('#filter').css('display', 'none');
         $('#visualization-tab-content').css('visibility', 'hidden');
         $('#result-tab-content').css('display', 'inline');
         $('#show-results').parent().addClass('active');
         $('#show-visualization').parent().removeClass('active');
     });
 
-    $('#show-filters').hover(
-        function() {
-            $(this).addClass('btn-no-padding');
-        }, 
-        function () {
-            $(this).removeClass('btn-no-padding');
-        }
-    );
+    $('#show-filters').click(function() {
+        $('#visualization-tab-content').css('visibility', 'hidden');
+        $('#result-tab-content').css('display', 'inline');
+        $('#show-results').parent().addClass('active');
+        $('#show-visualization').parent().removeClass('active');
+    });
+
+    $('#show-filters').click( function() {
+        $("#filter").toggle();
+    });
 });

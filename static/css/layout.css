@@ -16,25 +16,20 @@
   padding: 10px 10px 0px 10px;
 }
 
-.btn-no-padding {
-  background-color: #f8f8f8;
-  background-image: -webkit-gradient(linear,left top,left bottom,from(#f8f8f8),to(#f1f1f1));
-  background-image: -webkit-linear-gradient(top,#f8f8f8,#f1f1f1);
-  background-image: linear-gradient(top,#f8f8f8,#f1f1f1);
+.filter-button {
+  background-color: #f6f6f6;
+  background-image: -webkit-gradient(linear,left top,left bottom,from(#f6f6f6),to(#f1f1f1));
+  background-image: -webkit-linear-gradient(top,#f6f6f6,#f1f1f1);
+  background-image: linear-gradient(top,#f6f6f6,#f1f1f1);
+  -webkit-box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
   border: 1px solid #c6c6c6;
-  color: #222;
-  -webkit-box-shadow: 0 1px 1px rgba(0,0,0,0.1);
-  box-shadow: 0 1px 1px rgba(0,0,0,0.1);
-  -webkit-transition: all 0.0s;
-  transition: all 0.0s;
-  padding: 0px;
-  -webkit-border-radius: 5px;
-  -moz-border-radius: 5px;
-  border-radius: 5px;
+  padding: 8px 20px;
+  border-radius: 3px;
 }
 
 #separator {
-  margin: 10px 10px 0px 10px;
+  margin: 10px 10px 20px 10px;
 }
 
 #navigation-bar li {
@@ -167,5 +162,15 @@
 
 .content {
    margin: 64px auto;
+}
+
+.navbar {
+  margin: 0px;
+}
+
+.form-control {
+  width: auto;
+  display: inline;
+  margin: 3px;
 }
 

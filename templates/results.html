@@ -39,62 +39,73 @@
             <div class="form-group">
               <input type="text" name="searched_word" class="form-control non-nulleable-input harlem-shake" value='{{ searched_word }}' id="search-value" placeholder="Enter word" data-animation="jump" data-animation-speed="fast">
             </div>
-            <button type="submit" data-animation="shake" data-animation-speed="slow" class="harlem-shake btn btn-default disabled-when-input-is-null-button" id="search-button">Search</button>
+            <button type="submit" data-animation="shake" data-animation-speed="slow" class="harlem-shake btn btn-primary disabled-when-input-is-null-button" id="search-button">Search</button>
           </form>
         </div>
       </div>
     </div>
     <div class="content">
       <div class="row">
-        <div class="stats harlem-shake" id="results-info" data-animation="flipInX" data-animation-speed="slow"> 
-        </div>
-        <div id="did-you-mean" class="harlem-shake" data-animation="wiggle">
-        </div>
         <ul id="navigation-bar">
           <li class="active harlem-shake" data-animation="fadeIn"><a id="show-results">Results</a></li>
-          <li class="harlem-shake" data-animation="flip"><a id="show-visualization">Visualization</a></li>
-          <li class="harlem-shake" data-animation="flip">
-            <a id="show-filters">
-              Filter
+          <li class="harlem-shake" data-animation="pulse"><a id="show-visualization">Visualization</a></li>
+          <li class="harlem-shake" data-animation="fadeOut">
+            <a id="show-filters" class="filter-button">
+              Refine Results
             </a>
           </li>
         </ul>
+
         <hr id="separator" class="harlem-sake" data-animation="rotate"/>
-        <div id='result-tab-content'>
+
+        <div id='result-tab-content' class="col-md-12">
           <div class="col-md-8">
-            <div id="filter">
-              <select id="work-select">
+            <div id="filter" class="nav" style="display: none;" >
+              <select id="work-select" class="form-control harlem-shake" data-animation="rotateHalf">
                 <option selected>Any</option>
               </select>
-              <select id="char-select">
+              <select id="char-select" class="form-control harlem-shake" data-animation="scale">
                 <option selected>Any</option>
               </select>
-              <button onclick="filterByWorkAndCharacter()">Filter</button>
+              <button class="btn btn-default harlem-shake" onclick="filterByWorkAndCharacter()" data-animation="rotate">
+                Filter
+              </button>
             </div>
+
+            <br/>
+
+            <div class="stats harlem-shake" id="results-info" data-animation="flipInX" data-animation-speed="slow"> 
+            </div>
+
+            <div id="did-you-mean" class="harlem-shake" data-animation="wiggle">
+            </div>
+
             <div id="results" class="row">
-            </div>
-            <div id="results-loading" class="row" style="display: none;">
-              <em>Loading...</em>
+              <div class="results-loading">Loading...</div>
             </div>
           </div>
+
           <div class="col-md-4 box harlem-shake" data-animation="swing" id="word-definition">
             <h3 class="harlem-shake" data-animation="bounce">{{ searched_word }}'s definition:</h3>
             <p id='definition'><i id='loading_message'>Loading...</i></p>
           </div>
+        
         </div>
-        <div id='visualization-tab-content'>
-          <div class="col-md-12">
-            <div class="row">
-              {% if works %}
-              <div id="treemap" class="harlem-shake" data-animation="flipOutX"></div>
-              {% else %}
-              <p class="harlem-shake"data-animation="wobble">
-                No results found for <i>{{ searched_word }}</i> 
-              </p>
-              {% endif %}
-            </div>
+
+
+
+        <div id='visualization-tab-content' class="col-md-12">
+          <div class="row">
+            {% if works %}
+            <div id="treemap" class="harlem-shake" data-animation="flipOutX"></div>
+            {% else %}
+            <p class="harlem-shake"data-animation="wobble">
+              No results found for <i>{{ searched_word }}</i> 
+            </p>
+            {% endif %}
           </div>
         </div>
+
       </div>
     </div>
   </body>
