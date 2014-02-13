@@ -1,6 +1,6 @@
 import unittest
 
-from auxiliary.preprocessing import Preprocessing
+from auxiliary import database_creation
 import os
 
 class CaseInstance(object):
@@ -14,7 +14,7 @@ class CaseInstance(object):
         self.speaks_offsets = speaks_offsets
         self.sorted_offsets = sorted_offsets
 
-class PreprocessingTest(unittest.TestCase):
+class database_creationTest(unittest.TestCase):
 
     case_instances = [
         CaseInstance(text='''	JORGE
@@ -419,18 +419,18 @@ DUNCAN	What bloody man is that? He can report,
 
     def test_find_title(self):
         for case_instance in self.case_instances:
-            title = Preprocessing.find_title(case_instance.text)
+            title = database_creation.find_title(case_instance.text)
             self.assertEquals(title, case_instance.title,
                 'Failed index ' + case_instance.title)
 
     def test_titlecase(self):
         for case_instance in self.case_instances:
-            formatted_title = Preprocessing.titlecase(case_instance.title)
+            formatted_title = database_creation.titlecase(case_instance.title)
             self.assertEquals(formatted_title, case_instance.formatted_title)
 
     def test_get_speaks_offsets(self):
         for case_instance in self.case_instances:
-            speaks_offsets = Preprocessing.get_speaks_offsets(case_instance.
+            speaks_offsets = database_creation.get_speaks_offsets(case_instance.
                 text[case_instance.body_index:],case_instance.body_index)
             print speaks_offsets
             print '**************************************'
@@ -440,52 +440,52 @@ DUNCAN	What bloody man is that? He can report,
     def test_get_character_in_epilog(self):
         for case_instance in self.case_instances:
             speaks_offsets_str = {str(key): value for key, value in case_instance.speaks_offsets.iteritems()}
-            char = Preprocessing.get_character({'0': speaks_offsets_str},
-                {'0': case_instance.sorted_offsets}, 0, 0)
+            char = database_creation.get_character(speaks_offsets_str,
+                case_instance.sorted_offsets, 0)
             self.assertEquals('EPILOG', char)
 
     def test_get_character_for_first_case(self):
         test_case = self.case_instances[0]
         speaks_offsets_str = {str(key): value for key, value in test_case.speaks_offsets.iteritems()}
 
-        char = Preprocessing.get_character({'0': speaks_offsets_str},
-            {'0' : test_case.sorted_offsets}, 0, 16)
+        char = database_creation.get_character(speaks_offsets_str,
+            test_case.sorted_offsets, 16)
         self.assertEquals('ANA', char)
 
     def test_get_character_for_second_case(self):
         test_case = self.case_instances[1]
         speaks_offsets_str = {str(key): value for key, value in test_case.speaks_offsets.iteritems()}
 
-        char = Preprocessing.get_character({'0': speaks_offsets_str},
-            {'0' : test_case.sorted_offsets}, 0, 1197)
+        char = database_creation.get_character(speaks_offsets_str,
+            test_case.sorted_offsets, 1197)
         self.assertEquals('SLY', char)
 
-        epilog = Preprocessing.get_character({'0': speaks_offsets_str},
-            {'0' : test_case.sorted_offsets}, 0, 1157)
+        epilog = database_creation.get_character(speaks_offsets_str,
+            test_case.sorted_offsets, 1157)
         self.assertEquals('EPILOG', epilog)
 
-        hostess = Preprocessing.get_character({'0': speaks_offsets_str},
-            {'0' : test_case.sorted_offsets}, 0, 1227)
+        hostess = database_creation.get_character(speaks_offsets_str,
+            test_case.sorted_offsets, 1227)
         self.assertEquals('Hostess', hostess)
 
     def test_get_character_for_file_without_characters(self):
         test_case = self.case_instances[3]
         speaks_offsets_str = {str(key): value for key, value in test_case.speaks_offsets.iteritems()}
 
-        epilog = Preprocessing.get_character({'0': speaks_offsets_str},
-            {'0' : test_case.sorted_offsets}, 0, 38245)
+        epilog = database_creation.get_character(speaks_offsets_str,
+            test_case.sorted_offsets, 38245)
         self.assertEquals('EPILOG', epilog)
 
     def test_get_mentions_for_macbeth(self):
     	test_case = self.case_instances[4]
         speaks_offsets_str = {str(key): value for key, value in test_case.speaks_offsets.iteritems()}
 
-        char = Preprocessing.get_character({'0': speaks_offsets_str},
-            {'0' : test_case.sorted_offsets}, 0, 1810)
+        char = database_creation.get_character(speaks_offsets_str,
+            test_case.sorted_offsets, 1810)
         self.assertEquals('DUNCAN', char)
 
-        char = Preprocessing.get_character({'0': speaks_offsets_str},
-            {'0' : test_case.sorted_offsets}, 0, 1510)
+        char = database_creation.get_character(speaks_offsets_str,
+            test_case.sorted_offsets, 1510)
         self.assertEquals('ALL', char)
 
 
