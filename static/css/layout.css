@@ -168,6 +168,10 @@
   margin: 0px;
 }
 
+.character-mentions {
+  margin-left: 20px;
+}
+
 .filter-options {
   width: auto;
   display: inline;
