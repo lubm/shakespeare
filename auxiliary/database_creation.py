@@ -266,7 +266,7 @@ class CreateIndexPipeline(base_handler.PipelineBase):
             reducer_params={
                 'mime_type': 'text/plain'
             },
-            shards=42)
+            shards=43)
         yield mapreduce_pipeline.MapreducePipeline(
             'index',
             'auxiliary.database_creation.index_map',
@@ -274,7 +274,7 @@ class CreateIndexPipeline(base_handler.PipelineBase):
             'mapreduce.input_readers.BlobstoreZipLineInputReader',
             'mapreduce.output_writers.BlobstoreOutputWriter',
             mapper_params = (yield MapperParams(blobkey, metadata)),
-            shards=42)
+            shards=200)
 
 
     def finalized(self):

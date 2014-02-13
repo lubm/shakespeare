@@ -15,6 +15,8 @@ import auxiliary.spelling_corrector as spelling_corrector
 import auxiliary.formatter as formatter
 
 
+_PAGE_LIM = 10
+
 def _bold_mentions(word_name, mentions):
     """Turns into bold certain word in textual mentions.
 
@@ -32,7 +34,7 @@ def _bold_mentions(word_name, mentions):
             line) for line in mentions]
 
 
-def _get_all_word_mentions(word_name):
+def _get_word_mentions(word_name):
     """Get all the mentions of a certain word string representation accessed
        first by work and then by character.
 
@@ -48,14 +50,22 @@ def _get_all_word_mentions(word_name):
     if not word:
         return {}, 0
     works = ndb.get_multi(word.works)
+    work_lim = _PAGE_LIM / len(works) if word.count > _PAGE_LIM else None
     for work in works:
         work_chars = ndb.get_multi(work.characters)
         all_mentions[work.title] = {}
+        number_of_results = 0
         for char in work_chars:
-            mentions = char.get_string_mentions()
+            available_amount = work_lim - number_of_results if work_lim else \
+                None
+            if work_lim and available_amount <= 0:
+                break
+            mentions = char.get_string_mentions(available_amount=
+                available_amount)
+            number_of_results += len(mentions)
             bold_mentions = _bold_mentions(word.name, mentions)
             all_mentions[work.title][char.name] = bold_mentions
-    return all_mentions, word.count
+    return all_mentions, word.count, work_lim
 
 
 def _get_word_mentions_in_work(word_name, work_title):
@@ -190,7 +200,7 @@ class TreemapHandler(webapp2.RequestHandler):
            and color value is the value to be used as color acording to the
            color range.
 
-           It is called the function get_all_word_mentions to obtain a
+           It is called the function get_word_mentions to obtain a
            dictionary that maps from work and character to mentions.
         """
         searched_value = cgi.escape(self.request.get('searched_word').lower())
@@ -198,23 +208,21 @@ class TreemapHandler(webapp2.RequestHandler):
         if not searched_value:
             return
         
-        all_mentions, count = _get_all_word_mentions(searched_value)
-        if not count:
+        word = Word.get_by_id(searched_value)
+        if not word:
             return
 
         treemap_data = [['Location', 'Parent', 'Word Occurrences'],
-            ['Shakespeare\'s Corpus', None, count]]
+            ['Shakespeare\'s Corpus', None, word.count]]
 
-        word_db = Word.get_by_id(searched_value)
-        for work in all_mentions:
-            work_db = Work.get_by_id(work, parent=word_db.key)
-            treemap_data.append([work, 'Shakespeare\'s Corpus', work_db.count]) 
-            for char in all_mentions[work]:
-                if not char:
-                    continue
-                char_db = Character.get_by_id(char, parent=work_db.key)
-                treemap_data.append([{'v': work + '+' + char, 'f': char}, work, 
-                    char_db.count])
+        works = ndb.get_multi(word.works)
+        for work in works:
+            treemap_data.append([work.title, 'Shakespeare\'s Corpus', 
+                work.count]) 
+            chars = ndb.get_multi(work.characters)
+            for char in chars:
+                treemap_data.append([{'v': work.title + '+' + char.name, 'f':
+                    char.name}, work.title, char.count])
 
         self.response.headers['Content-Type'] = 'text/json'
         self.response.out.write(json.encode({"array": treemap_data}))
@@ -254,11 +262,12 @@ class SearchHandler(webapp2.RequestHandler):
         word_value = cgi.escape(self.request.get('searched_word').lower())
         work_value = self.request.get('work_filter')
         char_value = self.request.get('char_filter')
+        work_limit = None
 
         start = time.time()
         if work_value == 'Any':
-            mentions, count = _get_all_word_mentions(word_value)
-        else: 
+            mentions, count, work_limit = _get_word_mentions(word_value)
+        else:
             if char_value == 'Any':
                 mentions, count = _get_word_mentions_in_work(word_value, 
                     work_value)
@@ -270,6 +279,7 @@ class SearchHandler(webapp2.RequestHandler):
         result = {
             'mentions': mentions,
             'number_results': count,
+            'work_limit': str(work_limit),
             'time': round(end - start, 4),
             'did_you_mean': spelling_corrector.get_suggestion(word_value)
         }

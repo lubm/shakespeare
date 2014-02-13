@@ -10,7 +10,7 @@ function getSearchedWord() {
     return document.location.search.split('=')[1]; 
 }
 
-function insertMentions(mentions) {
+function insertMentions(mentions, limit) {
     /* Displays the mentions of the search filtered by work and character. The 
      * filter is optional */
     if (jQuery.isEmptyObject(mentions)) {
@@ -38,6 +38,7 @@ function insertMentions(mentions) {
         characterMentions = document.createElement('div');
         $(characterMentions).addClass('character-mentions');
 
+        count_mentions = 0
         for (charac in mentions[work]) {
             speaker = document.createElement('p');
             $(speaker).addClass('leader');
@@ -54,20 +55,25 @@ function insertMentions(mentions) {
             for (var i = 0; i < mentions_length; i++) {
                 line = document.createElement('p');
                 $(line).addClass('result-line');
+                $(line).addClass('harlem-shake');
+                $(line).attr('data-animation', 'wiggle');
                 $(line).html(mentions[work][charac][i]);
-                if (i > 4) {
-                    $(line).hide();
-                }
+                $(characterLines).append(line);
+                count_mentions += 1
+            }
+            if (count_mentions == parseInt(limit)) {
+                line = document.createElement('p');
+                $(line).text("...");
                 $(characterLines).append(line);
             }
-            if(mentions_length > 4) {
-                load_more = document.createElement('a');
+            /*if(limit != "None" && mentions_length == parseInt(limit)) {
                 $(load_more).addClass('load_more');
+                load_more = document.createElement('a');
                 $(load_more).attr('character', charac);
                 $(load_more).attr('work', work);
                 $(load_more).text("Load " + (mentions_length-4-1) + " more lines");
-                $(characterLines).append(load_more);
-            }
+                $(characterLines).append(load_more); 
+            }*/
 
             $(characterMentions).append(characterLines);
 
@@ -99,8 +105,8 @@ function insertResults(result) {
     /* Insert all the request results in the html */
     
     mentions = result['mentions'];
-    console.log(mentions);
-    insertMentions(mentions);
+    limit = result['work_limit'];
+    insertMentions(mentions, limit);
 
     time = result['time'];
     number_results = result['number_results'];

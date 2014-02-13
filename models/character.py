@@ -27,6 +27,9 @@ class Character(ndb.Model):
         super(Character, self).__init__(*args, **kwargs)
         self.mentions = []
 
-    def get_string_mentions(self):
+    def get_string_mentions(self, available_amount=None):
         """Get all mentions as strings"""
+        if available_amount:
+            return [mention.line for mention in
+                    ndb.get_multi(self.mentions[:available_amount])]
         return [mention.line for mention in ndb.get_multi(self.mentions)]
