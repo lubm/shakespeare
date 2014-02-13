@@ -1,31 +1,33 @@
 Our project allows the user to upload a single zip file in using the /admin 
 page. This is only needed if the database is not loaded
 
-Clicking on the Index button will start a MapReduce task and save the results in
-the ndb database.
-The results can also be seen in a file that becomes available after the 
-completion of this job using a link that will appear in the index_link column 
-after the completion of job.
+Clicking on the Index button will start a chain of MapReduce tasks and save the
+results in the ndb database.
+The progress can be seen through a link that gets printed in the console output
+after the MapReduce job stars.
 
 The word search is ready and also the RPC call with Javascript.
+
+Our results page shows a summary of the results, filters can be added through
+the Refine Results button.
 
 Extensions:
 	- Did you mean
 		Suggest an existing word in the database if the user misspelled
 		something. For this it chooses the word at distance 1 that appears the
-		most in  shakespeare's works.
+		most in shakespeare's works.
 	- Visualization
 		We show a treemap of the results. The size of a block is proportional to
 		the number of occurences of the searched word in the respective work.
 		For now we are displaying numbers instead of work's titles because we
-		are changing something in our database model. 
+		are changing something in our database model. The visualization has
+		tooltips with the count for each block.
 	- Easter Egg
 		If you enter the konami code (up up down down left right left right a b)
-		in the homepage an alert will appear.
-	- We are still working in enabling the user to search by character. We
-		changed the database model, but we are still adding the search feature
-		to the UI. The only way were is possible to see the characters rigth now
-		is in the visualization, which we are still refactoring, anyway.
+		in the homepage and in the results page, fun things will happen.
+	- Filtering by Work and Character
+		The Refine Results button allows the user to refine its results, in
+		order to have more understandable results.
 
 **************************      INPUT FORMAT      **************************
 
@@ -37,7 +39,7 @@ first non-empty line of each text file is regarded as the work's title.
 We are using the nose-gae framework to run our tests 
 Url: https://code.google.com/p/nose-gae/
 
-This is one of the recommended framekorks in the AppEngine docs for local unit
+This is one of the recommended frameworks in the AppEngine docs for local unit
 testing.
 
 For installing noseGAE:
@@ -49,6 +51,4 @@ To run the tests, execute this in the app directory.
 
 $ nosetests --with-gae --without-sandbox tests/
 
-
-
-
+For coverage add the --cover-html parameter
